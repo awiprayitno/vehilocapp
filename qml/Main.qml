@@ -3,6 +3,7 @@ import QtQuick 2.0
 import QtPositioning 5.5
 import QtLocation 5.5
 import QtQuick.Layouts 1.11
+import QtWebSockets 1.1
 import "pages"
 
 App {
@@ -15,10 +16,49 @@ App {
     id: mainApp
     property var userLoggedIn: false
     property var token: ''
+    property var vhcIndex: ({})
     property var vehicles: []
     property var geofences: []
     property var showGFLables: false
 //    property var geofences: [{ "customer_id": 3, "geometry": [ { "latitude": -7.7022626717, "longitude": 109.02928004661489 }, { "latitude": -7.702687358367529, "longitude": 109.02925918309677 }, { "latitude": -7.703107955070292, "longitude": 109.02919679346951 }, { "latitude": -7.703520411232121, "longitude": 109.02909347857933 }, { "latitude": -7.703920754674705, "longitude": 109.02895023340507 }, { "latitude": -7.704305129871843, "longitude": 109.0287684374761 }, { "latitude": -7.704669835080264, "longitude": 109.02854984158658 }, { "latitude": -7.705011357989443, "longitude": 109.02829655093443 }, { "latitude": -7.705326409547071, "longitude": 109.02801100484707 }, { "latitude": -7.7056119556344225, "longitude": 109.02769595328945 }, { "latitude": -7.70586524628658, "longitude": 109.02735443038027 }, { "latitude": -7.706083842176102, "longitude": 109.02698972517184 }, { "latitude": -7.706265638105074, "longitude": 109.0266053499747 }, { "latitude": -7.706408883279321, "longitude": 109.02620500653212 }, { "latitude": -7.706512198169509, "longitude": 109.0257925503703 }, { "latitude": -7.706574587796769, "longitude": 109.02537195366753 }, { "latitude": -7.706595451314884, "longitude": 109.024947267 }, { "latitude": -7.706574587796769, "longitude": 109.02452258033247 }, { "latitude": -7.706512198169509, "longitude": 109.0241019836297 }, { "latitude": -7.706408883279321, "longitude": 109.02368952746788 }, { "latitude": -7.706265638105074, "longitude": 109.0232891840253 }, { "latitude": -7.706083842176102, "longitude": 109.02290480882816 }, { "latitude": -7.70586524628658, "longitude": 109.02254010361973 }, { "latitude": -7.7056119556344225, "longitude": 109.02219858071055 }, { "latitude": -7.705326409547071, "longitude": 109.02188352915293 }, { "latitude": -7.705011357989443, "longitude": 109.02159798306558 }, { "latitude": -7.704669835080264, "longitude": 109.02134469241342 }, { "latitude": -7.704305129871843, "longitude": 109.0211260965239 }, { "latitude": -7.703920754674705, "longitude": 109.02094430059493 }, { "latitude": -7.703520411232121, "longitude": 109.02080105542068 }, { "latitude": -7.703107955070292, "longitude": 109.0206977405305 }, { "latitude": -7.702687358367529, "longitude": 109.02063535090323 }, { "latitude": -7.7022626717, "longitude": 109.02061448738512 }, { "latitude": -7.701837985032471, "longitude": 109.02063535090323 }, { "latitude": -7.701417388329707, "longitude": 109.0206977405305 }, { "latitude": -7.701004932167878, "longitude": 109.02080105542068 }, { "latitude": -7.7006045887252945, "longitude": 109.02094430059493 }, { "latitude": -7.700220213528157, "longitude": 109.0211260965239 }, { "latitude": -7.699855508319736, "longitude": 109.02134469241342 }, { "latitude": -7.699513985410556, "longitude": 109.02159798306558 }, { "latitude": -7.699198933852928, "longitude": 109.02188352915293 }, { "latitude": -7.698913387765577, "longitude": 109.02219858071055 }, { "latitude": -7.69866009711342, "longitude": 109.02254010361973 }, { "latitude": -7.698441501223898, "longitude": 109.02290480882816 }, { "latitude": -7.698259705294926, "longitude": 109.0232891840253 }, { "latitude": -7.698116460120678, "longitude": 109.02368952746788 }, { "latitude": -7.69801314523049, "longitude": 109.0241019836297 }, { "latitude": -7.69795075560323, "longitude": 109.02452258033247 }, { "latitude": -7.697929892085115, "longitude": 109.024947267 }, { "latitude": -7.69795075560323, "longitude": 109.02537195366753 }, { "latitude": -7.69801314523049, "longitude": 109.0257925503703 }, { "latitude": -7.698116460120678, "longitude": 109.02620500653212 }, { "latitude": -7.698259705294926, "longitude": 109.0266053499747 }, { "latitude": -7.698441501223898, "longitude": 109.02698972517184 }, { "latitude": -7.69866009711342, "longitude": 109.02735443038027 }, { "latitude": -7.698913387765577, "longitude": 109.02769595328945 }, { "latitude": -7.699198933852928, "longitude": 109.02801100484707 }, { "latitude": -7.699513985410556, "longitude": 109.02829655093443 }, { "latitude": -7.699855508319736, "longitude": 109.02854984158658 }, { "latitude": -7.700220213528157, "longitude": 109.0287684374761 }, { "latitude": -7.7006045887252945, "longitude": 109.02895023340507 }, { "latitude": -7.701004932167878, "longitude": 109.02909347857933 }, { "latitude": -7.701417388329707, "longitude": 109.02919679346951 }, { "latitude": -7.701837985032471, "longitude": 109.02925918309677 }, { "latitude": -7.7022626717, "longitude": 109.02928004661489 } ], "id": 3, "name": "Cilacap" }]
+
+    WebSocket {
+        id: wsVehiloc
+//        url: 'wss://vehiloc.net/sub-split/14533199'
+//        active: true
+        onTextMessageReceived: {
+//            console.log('text received: ', message)
+            // {"gpsdt": 1627726666, "bearing": 46, "adextpowervalue": 100, "alt": 0, "speed": 21,
+            // "vehicle_id": 1301, "eventcode": 18, "base_ci": 40016, "lon": 110.455209, "ad1value": 0, "adbattvalue": 99,
+            // "base_mcc": 510, "base_lac": 4901, "gsmsignal": 100, "hdop": 0, "gpsstatus": 1,
+            // "lat": -7.022951, "sensors": [], "vehicle_type": 0, "createdt": 1627726667, "runtime": 0,
+            // "io_states": 512, "ad3value": 0, "journey": 45391742, "ad2value": 0, "trackertype": 6706,
+            // "satellitenumber": 15, "base_mnc": 10, "temp_alert": false}
+            var new_data = JSON.parse(message)
+            console.log('got new data for vhc id: ', new_data['vehicle_id'], 'time: ', new Date(new_data['gpsdt']*1000).toLocaleTimeString('H:mm'))
+            var row = mainApp.vehicles[vhcIndex[new_data['vehicle_id']]]
+            if (row) {
+                console.log('found row vhc_id: ', row['id'], 'gpsdt: ', new Date(row['gpsdt']*1000).toLocaleTimeString('H:mm'))
+                row['gpsdt'] = new_data['gpsdt']
+                row['bearing'] = new_data['bearing']
+                row['speed'] = new_data['speed']
+                row['lon'] = new_data['lon']
+                row['lat'] = new_data['lat']
+                row['base_mcc'] = new_data['base_mcc']
+                row['sensors'] = new_data['sensors']
+                row['io_states'] = new_data['io_states']
+                row['adextpowervalue'] = new_data['adextpowervalue']
+                row['alt'] = new_data['alt']
+                row['adbattvalue'] = new_data['adbattvalue']
+                row['gsmsignal'] = new_data['gsmsignal']
+                row['gpsstatus'] = new_data['gpsstatus']
+                row['runtime'] = new_data['runtime']
+                row['journey'] = new_data['journey']
+                row['satellitenumber'] = new_data['satellitenumber']
+                mainApp.vehiclesChanged()
+            }
+        }
+    }
 
     JsonListModel {
         id: jsonLMVehicles
@@ -230,7 +270,7 @@ App {
                                 Layout.topMargin: dp(8)
 
                                 AppText {
-                                    text: model.type === 4 ? model.speed : model.speed + '\nkm/h'
+                                    text: model.speed === undefined ? '---' : model.type === 4 ? model.speed : model.speed + '\nkm/h'
                                     anchors.centerIn: parent
                                     horizontalAlignment: Text.AlignHCenter
                                     color: "white"
@@ -240,7 +280,7 @@ App {
                             }
 
                             Rectangle {
-                                border.color: "green"
+                                border.color: "dodgerblue"
                                 radius: dp(2)
                                 Layout.fillWidth: true
                                 height: dp(20)
@@ -249,26 +289,42 @@ App {
                                 AppText {
                                     text: model.base_mcc !== 510 ? model.base_mcc / 10 + '°' : '--' + '°'
                                     anchors.centerIn: parent
-                                    color: "green"
+                                    color: "dodgerblue"
                                     fontSize: 12
 //                                    bottomPadding: dp(12)
                                 }
                             }
                         } //ColumnLayout
 
-//                        rightItem: Rectangle {
-//                            border.color: 'green'
-//                            radius: dp(2)
-//                            width: dp(50)
-//                            height: dp(40)
-//                            anchors.verticalCenter: parent.verticalCenter
+                        rightItem: ColumnLayout {
+                        spacing: dp(2)
+                        width: dp(50)
+                            AppText {
+                                Layout.preferredHeight: dp(20)
+                                Layout.alignment: Qt.AlignRight
+                                Layout.topMargin: dp(7)
+                                text: formatGpsdt(model.gpsdt)
+                                color: "blue"
+                                fontSize: 14
+                            }
 
-//                            AppText {
-//                                anchors.centerIn: parent
-//                                color: "green"
-//                                text: "18:11"
-//                            }
-//                        }
+
+                        Rectangle {
+                            border.color: "green"
+                            radius: dp(2)
+                            Layout.fillWidth: true
+                            height: dp(20)
+                            visible: model.type === 4
+
+                            AppText {
+                                text: model.base_mcc !== 510 ? model.base_mcc / 10 + '°' : '--' + '°'
+                                anchors.centerIn: parent
+                                color: "green"
+                                fontSize: 12
+//                                    bottomPadding: dp(12)
+                            }
+                        }
+                    } //ColumnLayout
 
                         textItem: Row {
                             spacing: dp(5)
@@ -410,16 +466,19 @@ App {
         opacity: mainApp.userLoggedIn ? 0 : 1 // hide if user is logged in
     }
 
-    function toLocalDateTimeString(utc_timestamp, no_today) {
-        var d = new Date(utc_timestamp * 1000)
-        var today = new Date();
-        var mymin = d.getMinutes() + "";
-        if (mymin.length === 1) {mymin = '0' + mymin;}
-        if ((no_today === undefined) && (today.getFullYear() === d.getFullYear()) && (today.getMonth() === d.getMonth()) && (today.getDate() === d.getDate())) {
-            return 'today ' + d.getHours() + ':' + mymin;
-        } else {
-            return (1 + d.getMonth()) + '/' + d.getDate() + '/' + d.getFullYear() + ' ' + d.getHours() + ':' + mymin;
+    function formatGpsdt(gpsdt) {
+        // return current time if gps is still today, return date/month if this year, return year < this year
+        var currenttime = new Date();
+        var gpstime = new Date(gpsdt * 1000)
+        if ((currenttime.getFullYear() === gpstime.getFullYear()) && (currenttime.getMonth() === gpstime.getMonth()) && (currenttime.getDate() === gpstime.getDate())) {
+            return gpstime.toLocaleTimeString(Qt.locale('id_ID'), 'H:mm')
         }
+
+        if (currenttime.getFullYear() === gpstime.getFullYear()) {
+            return gpstime.toLocaleDateString(Qt.locale('id_ID'), 'd-MMM')
+        }
+
+        return gpstime.toLocaleDateString(Qt.locale('id_ID'), 'yyyy')
     }
 
     function loadVehiloc() {
@@ -431,11 +490,36 @@ App {
         .timeout(20000)
         .end(function(err, res) {
             if(res.ok) {
-                console.log('Got vehicles data, status: ', res.status);
+//                console.log('Got vehicles data, status: ', res.status);
 //                console.log(JSON.stringify(res.body, null, 4));
                 mainApp.vehicles = res.body
 //                console.log(mainApp.vehicles[0]['name'])
                 mainApp.userLoggedIn = true
+
+                //build vehicle vhcIndex
+                mainApp.vehicles.forEach(function(vhc, idx, theArray) {
+                    vhcIndex[vhc['id']] = idx
+                })
+//                console.log(mainApp.vhcIndex)
+
+                // subscribe updates
+                HttpRequest
+                .get("https://vehiloc.net/rest/customer_salts")
+                .auth(mainApp.token, 'unused')
+                .timeout(20000)
+                .end(function(err, res) {
+                    if(res.ok) {
+//                        console.log('Got cust salts: ', JSON.stringify(res.body, null, 4));
+                        wsVehiloc.url = 'wss://vehiloc.net/sub-split/' + res.body.join(',')
+//                        console.log('wss url: ', wsVehiloc.url)
+                        wsVehiloc.active = true
+
+                    }
+                    else {
+                        console.log('Error message: ', err.message)
+                        console.log('Error response: ', err.response)
+                    }
+                });
             }
             else {
                 console.log('Error message: ', err.message)
@@ -454,7 +538,7 @@ App {
         .end(function(err, res) {
             if(res.ok) {
                 console.log('Got geofences data, status: ', res.status);
-                console.log(JSON.stringify(res.body, null, 4));
+//                console.log(JSON.stringify(res.body, null, 4));
                 mainApp.geofences = res.body
                 console.log(mainApp.geofences[0])
             }
@@ -471,6 +555,8 @@ App {
         userLoggedIn = false
         mainApp.vehicles = []
         mainApp.geofences = []
+        wsVehiloc.active = false
+        wsVehiloc.url = ''
     }
 
     Component.onCompleted: {
