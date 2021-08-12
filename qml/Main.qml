@@ -31,14 +31,17 @@ App {
             // {"gpsdt": 1627726666, "bearing": 46, "adextpowervalue": 100, "alt": 0, "speed": 21,
             // "vehicle_id": 1301, "eventcode": 18, "base_ci": 40016, "lon": 110.455209, "ad1value": 0, "adbattvalue": 99,
             // "base_mcc": 510, "base_lac": 4901, "gsmsignal": 100, "hdop": 0, "gpsstatus": 1,
-            // "lat": -7.022951, "sensors": [], "vehicle_type": 0, "createdt": 1627726667, "runtime": 0,
+            // "lat": -7.022951, "sensors": [], "geofences": [], "vehicle_type": 0, "createdt": 1627726667, "runtime": 0,
             // "io_states": 512, "ad3value": 0, "journey": 45391742, "ad2value": 0, "trackertype": 6706,
             // "satellitenumber": 15, "base_mnc": 10, "temp_alert": false}
             var new_data = JSON.parse(message)
-            console.log('got new data for vhc id: ', new_data['vehicle_id'], 'time: ', new Date(new_data['gpsdt']*1000).toLocaleTimeString('H:mm'))
             var row = mainApp.vehicles[vhcIndex[new_data['vehicle_id']]]
             if (row) {
-                console.log('found row vhc_id: ', row['id'], 'gpsdt: ', new Date(row['gpsdt']*1000).toLocaleTimeString('H:mm'))
+                console.log('got new data vhc_id: ', row['id'], 'updated from : ', new Date(row['gpsdt']*1000).toLocaleTimeString('H:mm') + ' to: ' + new Date(new_data['gpsdt']*1000).toLocaleTimeString('H:mm'))
+                if ((row['lon'] !== new_data['lon']) && (row['lat'] !== new_data['lat'])) {
+                    row['address'] = undefined
+                }
+
                 row['gpsdt'] = new_data['gpsdt']
                 row['bearing'] = new_data['bearing']
                 row['speed'] = new_data['speed']
@@ -55,6 +58,8 @@ App {
                 row['runtime'] = new_data['runtime']
                 row['journey'] = new_data['journey']
                 row['satellitenumber'] = new_data['satellitenumber']
+                row['geofences'] = new_data['geofences']
+
                 mainApp.vehiclesChanged()
             }
         }
@@ -64,7 +69,7 @@ App {
         id: jsonLMVehicles
         source: vehicles
         keyField: 'id'
-        fields: ['id', 'name', 'plate_no', 'customer_name', 'lat', 'lon', 'bearing', 'speed', 'gpsdt', 'type', 'base_mcc', 'sensors']
+        fields: ['id', 'name', 'plate_no', 'customer_name', 'lat', 'lon', 'bearing', 'speed', 'gpsdt', 'type', 'base_mcc', 'sensors', 'trackertype', 'io_states', 'adextpowervalue', 'geofences', 'address']
     }
 
     JsonListModel {
@@ -91,12 +96,17 @@ App {
 
         navigationMode: navigationModeTabs
         NavigationItem {
+            id: navItemMap
             title: 'Map'
             icon: IconType.mapmarker
+
             NavigationStack {
+                id: navStackMap
+                property alias moiMap: pageMap
                 Page {
                     id: pageMap
                     title: qsTr("Map")
+                    property alias meiMap: map
 
                     rightBarItem: NavigationBarRow {
                         IconButtonBarItem {
@@ -113,10 +123,8 @@ App {
                         anchors.fill: parent
                         showUserPosition: true
 
+                        property var elehehe: 'inside map hurray'
 
-                        // configure plugin for displaying map here
-                        // see http://doc.qt.io/qt-5/qtlocation-index.html#plugin-references-and-parameters
-                        // for a documentation of possible Location Plugins
                         plugin: Plugin {
                             name: "osm" // e.g. mapbox, ...
                             parameters: [
@@ -254,172 +262,181 @@ App {
                     }
 
                     model: jsonLMVehicles
-                    delegate: AppListItem {
-                        id: vehicleDelegate
+                    delegate: SwipeOptionsContainer {
+                        id: containerSwipe
 
-                        leftItem: ColumnLayout {
-                            spacing: dp(2)
-                            width: dp(40)
-                            Rectangle {
-                                color: (Math.floor(Date.now() / 1000) - model.gpsdt) > 86400
-                                       ? 'gray' : model.speed > 0
-                                         ? "green" : "red"
-                                radius: dp(2)
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: model.type === 4 ? dp(20) : dp(40)
-                                Layout.topMargin: dp(8)
+                        property var vhcGeofences: model.geofences
+                        property var vhcSensors: model.sensors
+                        property var vhcAddress: model.address
 
+                        AppListItem {
+                            id: vehicleDelegate
+
+                            leftItem: ColumnLayout {
+                                spacing: dp(2)
+                                width: dp(40)
+                                Rectangle {
+                                    color: (Math.floor(Date.now() / 1000) - model.gpsdt) > 86400
+                                           ? 'gray' : model.speed > 0
+                                             ? "green" : "red"
+                                    radius: dp(2)
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: model.type === 4 ? dp(20) : dp(40)
+                                    Layout.topMargin: dp(8)
+
+                                    AppText {
+                                        text: model.speed === undefined ? '---' : model.type === 4 ? model.speed : model.speed + '\nkm/h'
+                                        anchors.centerIn: parent
+                                        horizontalAlignment: Text.AlignHCenter
+                                        color: "white"
+                                        fontSize: 14
+                                        //                                    bottomPadding: dp(12)
+                                    }
+                                }
+
+                                Rectangle {
+                                    border.color: "dodgerblue"
+                                    radius: dp(2)
+                                    Layout.fillWidth: true
+                                    height: dp(20)
+                                    visible: model.type === 4
+
+                                    AppText {
+                                        text: model.base_mcc !== 510 ? model.base_mcc / 10 + '°' : '--' + '°'
+                                        anchors.centerIn: parent
+                                        color: "dodgerblue"
+                                        fontSize: 12
+                                        //                                    bottomPadding: dp(12)
+                                    }
+                                }
+                            } //ColumnLayout
+
+                            rightItem: ColumnLayout {
+                                spacing: dp(2)
+                                width: dp(50)
                                 AppText {
-                                    text: model.speed === undefined ? '---' : model.type === 4 ? model.speed : model.speed + '\nkm/h'
-                                    anchors.centerIn: parent
-                                    horizontalAlignment: Text.AlignHCenter
-                                    color: "white"
+                                    Layout.preferredHeight: dp(20)
+                                    Layout.alignment: Qt.AlignRight
+                                    Layout.topMargin: dp(7)
+                                    text: formatGpsdt(model.gpsdt)
+                                    color: "blue"
                                     fontSize: 14
-//                                    bottomPadding: dp(12)
+                                }
+
+
+                                Image
+                                {
+                                    id: batteryIcon
+                                    source: getBatteryIcon(model.trackertype, model.adextpowervalue, model.io_states)
+                                    Layout.alignment: Qt.AlignRight
+                                }
+                            } //ColumnLayout
+
+                            textItem: Row {
+                                spacing: dp(5)
+                                AppText {
+                                    text: model.name
+                                }
+
+                                Repeater {
+                                    model: vhcSensors.length
+                                    Rectangle {
+                                        color: vhcSensors[index]["bgcolor"]
+                                        radius: dp(2)
+                                        width: sensorText.width
+                                        height: sensorText.height
+                                        AppText {
+                                            id: sensorText
+                                            text: vhcSensors[index].name
+                                            fontSize: vehilocApp.sensorFontSize
+                                            color: 'yellow'
+                                            leftPadding: dp(3)
+                                            rightPadding: dp(3)
+                                        }
+                                    }
                                 }
                             }
 
-                            Rectangle {
-                                border.color: "dodgerblue"
-                                radius: dp(2)
-                                Layout.fillWidth: true
-                                height: dp(20)
-                                visible: model.type === 4
-
+                            detailTextItem: Row {
+                                spacing: dp(5)
+                                Rectangle {
+                                    id: plateNoBG
+                                    color: "black"
+                                    radius: dp(2)
+                                    width: plateNoText.width
+                                    height: plateNoText.height
+                                    AppText {
+                                        id: plateNoText
+                                        text: model.plate_no
+                                        fontSize: 12
+                                        color: 'white'
+                                        leftPadding: dp(3)
+                                        rightPadding: dp(3)
+                                    }
+                                }
+                                Repeater {
+                                    model: vhcAddress !== undefined ? 0 : vhcGeofences !== undefined ? vhcGeofences.length : 0
+                                    Rectangle {
+                                        color: "green"
+                                        radius: dp(2)
+                                        width: gfText.width
+                                        height: gfText.height
+                                        AppText {
+                                            id: gfText
+                                            text: vhcGeofences[index]['name']
+                                            fontSize: 12
+                                            color: 'white'
+                                            leftPadding: dp(3)
+                                            rightPadding: dp(3)
+                                        }
+                                    }
+                                }
                                 AppText {
-                                    text: model.base_mcc !== 510 ? model.base_mcc / 10 + '°' : '--' + '°'
-                                    anchors.centerIn: parent
-                                    color: "dodgerblue"
+                                    id: textVhcAddress
+                                    visible: model.address !== undefined
+                                    text: model.address !== undefined ? model.address : ''
                                     fontSize: 12
-//                                    bottomPadding: dp(12)
+                                    color: 'black'
+                                    leftPadding: dp(3)
+                                    rightPadding: dp(3)
                                 }
                             }
-                        } //ColumnLayout
 
-                        rightItem: ColumnLayout {
-                        spacing: dp(2)
-                        width: dp(50)
-                            AppText {
-                                Layout.preferredHeight: dp(20)
-                                Layout.alignment: Qt.AlignRight
-                                Layout.topMargin: dp(7)
-                                text: formatGpsdt(model.gpsdt)
-                                color: "blue"
-                                fontSize: 14
+                            onSelected: {
+//                                console.log('clicked model: ' + model.name + ' index: ' + index + ' ' + mainApp.vehicles[index]['name'])
+                                if (mainApp.vehicles[index]['address'] === undefined || (mainApp.vehicles[index]['geofences'].length === 0)) {
+                                    HttpRequest
+                                    .get("https://vehiloc.net/rest/address", {lat: model.lat, lon: model.lon})
+                                    .auth(mainApp.token, 'unused')
+                                    .timeout(2000)
+                                    .end(function(err, res) {
+                                        if(res.ok) {
+                                            //                                    console.log(JSON.stringify(res.body, null, 4));
+                                            //                                    console.log(res.body);
+                                            mainApp.vehicles[index]['address'] = res.body['address']
+                                            mainApp.vehiclesChanged()
+                                        }
+                                        else {
+                                            console.log('Error message: ', err.message)
+                                            console.log('Error response: ', err.response)
+                                        }
+                                    });
+                                } else {
+                                    mainApp.vehicles[index]['address'] = undefined
+                                    mainApp.vehiclesChanged()
+                                }
                             }
-
-
-                        Rectangle {
-                            border.color: "green"
-                            radius: dp(2)
-                            Layout.fillWidth: true
-                            height: dp(20)
-                            visible: model.type === 4
-
-                            AppText {
-                                text: model.base_mcc !== 510 ? model.base_mcc / 10 + '°' : '--' + '°'
-                                anchors.centerIn: parent
-                                color: "green"
-                                fontSize: 12
-//                                    bottomPadding: dp(12)
+                        } // AppListItem
+                        leftOption: SwipeButton {
+                            text: 'Map'
+                            icon: IconType.mapmarker
+                            height: vehicleDelegate.height
+                            onClicked: {
+                                console.log(vehicleDelegate.item)
+                                vehilocApp.currentIndex = 0
+                                vehilocApp.setMapCenter(model.lat, model.lon)
                             }
                         }
-                    } //ColumnLayout
-
-                        textItem: Row {
-                            spacing: dp(5)
-                            AppText {
-                                text: model.name
-                            }
-
-                            Rectangle {
-                                visible: model.sensors[0] !== undefined
-                                color: model.sensors[0] !== undefined ? model.sensors[0]["bgcolor"] : 'white'
-                                radius: dp(2)
-                                width: sensorText0.width
-                                height: sensorText0.height
-                                AppText {
-                                    id: sensorText0
-                                    text: model.sensors[0] !== undefined ? model.sensors[0].name : ' '
-                                    fontSize: vehilocApp.sensorFontSize
-                                    color: 'yellow'
-                                    leftPadding: dp(3)
-                                    rightPadding: dp(3)
-                                }
-                            }
-                            Rectangle {
-                                visible: model.sensors[1] !== undefined
-                                color: model.sensors[1] !== undefined ? model.sensors[1]["bgcolor"] : 'white'
-                                radius: dp(2)
-                                width: sensorText1.width
-                                height: sensorText1.height
-                                AppText {
-                                    id: sensorText1
-                                    text: model.sensors[1] !== undefined ? model.sensors[1].name : ' '
-                                    fontSize: vehilocApp.sensorFontSize
-                                    color: 'yellow'
-                                    leftPadding: dp(3)
-                                    rightPadding: dp(3)
-                                }
-                            }
-                            Rectangle {
-                                visible: model.sensors[2] !== undefined
-                                color: model.sensors[2] !== undefined ? model.sensors[2]["bgcolor"] : 'white'
-                                radius: dp(2)
-                                width: sensorText2.width
-                                height: sensorText2.height
-                                AppText {
-                                    id: sensorText2
-                                    text: model.sensors[2] !== undefined ? model.sensors[2].name : ' '
-                                    fontSize: vehilocApp.sensorFontSize
-                                    color: 'yellow'
-                                    leftPadding: dp(3)
-                                    rightPadding: dp(3)
-                                }
-                            }
-                            Rectangle {
-                                visible: model.sensors[3] !== undefined
-                                color: model.sensors[3] !== undefined ? model.sensors[3]["bgcolor"] : 'white'
-                                radius: dp(2)
-                                width: sensorText3.width
-                                height: sensorText3.height
-                                AppText {
-                                    id: sensorText3
-                                    text: model.sensors[3] !== undefined ? model.sensors[3].name : ' '
-                                    fontSize: vehilocApp.sensorFontSize
-                                    color: 'yellow'
-                                    leftPadding: dp(3)
-                                    rightPadding: dp(3)
-                                }
-                            }
-                        }
-
-                        detailTextItem: Row {
-                            spacing: dp(5)
-                            Rectangle {
-                                id: plateNoBG
-                                color: "black"
-                                radius: dp(2)
-                                width: plateNoText.width
-                                height: plateNoText.height
-                                AppText {
-                                    id: plateNoText
-                                    text: model.plate_no
-                                    fontSize: 12
-                                    color: 'white'
-                                    leftPadding: dp(3)
-                                    rightPadding: dp(3)
-                                }
-                            }
-                        }
-
-
-
-//                        text: model.name
-//                        detailText: model.plate_no + ' Speed: ' + model.speed + ' Last update: ' + toLocalDateTimeString(model.gpsdt)
-//                        onSelected: {
-//                            console.log('clicked model: ' + model.name)
-//                        }
                     }
 
                     section.property: "customer_name"
@@ -430,6 +447,7 @@ App {
                         mainApp.loadVehiloc()
                         console.log('Updating data finished.')
                     }
+
                 }
             }
         }
@@ -458,6 +476,11 @@ App {
                 }
             }
         }
+
+        function setMapCenter(lat, lon) {
+            navItemMap.navigationStack.moiMap.meiMap.center = QtPositioning.coordinate(lat, lon)
+            navItemMap.navigationStack.moiMap.meiMap.zoomLevel = 14
+        }
     }
 
     LoginPage {
@@ -481,39 +504,61 @@ App {
         return gpstime.toLocaleDateString(Qt.locale('id_ID'), 'yyyy')
     }
 
+    function getBatteryIcon(trackertype, adextpowervalue, io_states) {
+        if (trackertype === 6706) {
+            if (adextpowervalue > 0) {
+                return "../assets/battery_green.png"
+            } else {
+                return "../assets/battery_red.png"
+            }
+        }
+        if (trackertype === 380) {
+            if (adextpowervalue > 100) {
+                return "../assets/battery_green.png"
+            } else {
+                return "../assets/battery_red.png"
+            }
+        }
+        if (trackertype === 4140) {
+            if ((io_states &  (1 << 7)) == 0) {
+                return "../assets/battery_green.png"
+            } else {
+                return "../assets/battery_red.png"
+            }
+        }
+        return ""
+    }
+
     function loadVehiloc() {
         // get list of vehicles
-        console.log('Updating vehicles list...')
+        console.log('Updating vehicles list and deactivate websocket ...')
+        wsVehiloc.active = false
         HttpRequest
         .get("https://vehiloc.net/rest/vehicles")
         .auth(mainApp.token, 'unused')
         .timeout(20000)
         .end(function(err, res) {
             if(res.ok) {
-//                console.log('Got vehicles data, status: ', res.status);
-//                console.log(JSON.stringify(res.body, null, 4));
+                console.log('Got vehicles list.')
                 mainApp.vehicles = res.body
-//                console.log(mainApp.vehicles[0]['name'])
                 mainApp.userLoggedIn = true
 
                 //build vehicle vhcIndex
                 mainApp.vehicles.forEach(function(vhc, idx, theArray) {
                     vhcIndex[vhc['id']] = idx
                 })
-//                console.log(mainApp.vhcIndex)
 
                 // subscribe updates
+                console.log('Vehicles index built, Getting customer salts for websocket...')
                 HttpRequest
                 .get("https://vehiloc.net/rest/customer_salts")
                 .auth(mainApp.token, 'unused')
                 .timeout(20000)
                 .end(function(err, res) {
                     if(res.ok) {
-//                        console.log('Got cust salts: ', JSON.stringify(res.body, null, 4));
                         wsVehiloc.url = 'wss://vehiloc.net/sub-split/' + res.body.join(',')
-//                        console.log('wss url: ', wsVehiloc.url)
                         wsVehiloc.active = true
-
+                        console.log('Got customer salts and websocket activated: ', wsVehiloc.url)
                     }
                     else {
                         console.log('Error message: ', err.message)
@@ -580,6 +625,7 @@ App {
                     mainApp.token = res.body.token
                     mainApp.loadVehiloc()
                     mainApp.loadGeofences()
+//                    map.fitViewportToVisibleMapItems()
                 }
                 else {
                     console.log(err.message)
