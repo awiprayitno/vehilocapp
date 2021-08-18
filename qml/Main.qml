@@ -131,6 +131,10 @@ App {
                                 // set required plugin parameters here
                             ]
                         }
+//                        plugin: Plugin {
+//                            name: "mapboxgl" // e.g. mapbox, ...
+//                            PluginParameter { name: "mapboxgl.access_token"; value: 'mapboxaccesstoken' }
+//                        }
 
                         MapItemView {
                             id: mapItemView
@@ -437,6 +441,20 @@ App {
                                 vehilocApp.setMapCenter(model.lat, model.lon)
                             }
                         }
+                        rightOption: SwipeButton {
+                            text: 'Details'
+                            icon: IconType.filetexto
+                            height: vehicleDelegate.height
+                            onClicked: {
+                                var vhcPage = Qt.createComponent("pages/VehicleDetailsPage.qml")
+                                // 'id', 'name', 'plate_no', 'customer_name', 'lat', 'lon', 'bearing', 'speed', 'gpsdt', 'type', 'base_mcc',
+                                // 'sensors', 'trackertype', 'io_states', 'adextpowervalue', 'geofences', 'address'
+                                listVehicles.navigationStack.push(
+                                            vhcPage, {
+                                                vhcData: model
+                                            })
+                            }
+                        }
                     }
 
                     section.property: "customer_name"
@@ -449,7 +467,7 @@ App {
                     }
 
                 }
-            }
+            }            
         }
 
         NavigationItem {
