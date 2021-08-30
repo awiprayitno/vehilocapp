@@ -63,5 +63,7 @@ macx {
 }
 
 DISTFILES += \
+    qml/pages/VehicleDetailsPage.qml \
     qml/pages/VehilocApp.qml
     qml/pages/LoginPage.qml
+

@@ -8,30 +8,44 @@ Page {
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
         spacing: dp(2)
+
         AppActivityIndicator {
             id: loadingIndicator
             visible: false
             iconSize: dp(30)
         }
 
+        AppImage {
+            Layout.alignment: Qt.AlignCenter
+            Layout.topMargin: dp(80)
+            defaultSource: '../../assets/logo.png'
+        }
+
         AppText {
+            Layout.alignment: Qt.AlignCenter
+            Layout.topMargin: dp(30)
             text: "Welcome to VehiLoc"
         }
 
         AppTextField {
             id: tfUsername
+            Layout.alignment: Qt.AlignCenter
+            Layout.topMargin: dp(20)
             placeholderText: "Username"
             inputMode: inputModeUsername
         }
         AppTextField {
             id: tfPassword
+            Layout.alignment: Qt.AlignCenter
             placeholderText: "Password"
             inputMode: inputModePassword
         }
         AppButton {
+            Layout.alignment: Qt.AlignCenter
+            Layout.topMargin: dp(20)
             text: 'Login'
+            isDefault: true
             onClicked: {
                 loadingIndicator.visible = true
                 loginPage.forceActiveFocus()    //move focus away to prevent strange mark symbol appear
@@ -49,8 +63,11 @@ Page {
                         console.log('Token: ', res.body.token)
                         nativeUtils.setKeychainValue("token", res.body.token)
                         mainApp.token = res.body.token
+                        mainApp.username = res.body.username
+                        mainApp.usertype = res.body.usertype
                         mainApp.loadVehiloc()
                         mainApp.loadGeofences()
+                        vehilocApp.currentIndex = 0
                     }
                     else {
                         console.log(err.message)

@@ -1,5 +1,5 @@
 import Felgo 3.0
-import QtQuick 2.0
+import QtQuick 2.15
 import QtPositioning 5.5
 import QtLocation 5.5
 import QtQuick.Layouts 1.11
@@ -16,6 +16,8 @@ App {
     id: mainApp
     property var userLoggedIn: false
     property var token: ''
+    property var username: undefined
+    property var usertype: undefined
     property var vhcIndex: ({})
     property var vehicles: []
     property var geofences: []
@@ -147,6 +149,12 @@ App {
                                         latitude: model.lat
                                         longitude: model.lon
                                     }
+
+//                                    Behavior on coordinate {
+//                                        CoordinateAnimation {
+////                                            duration: 2000
+//                                        }
+//                                    }
 
                                     anchorPoint.x: vehicleIcon.width/2
                                     anchorPoint.y: vehicleIcon.height/2
@@ -331,7 +339,9 @@ App {
                                 Image
                                 {
                                     id: batteryIcon
+                                    width: dp(20); height: dp(12)
                                     source: getBatteryIcon(model.trackertype, model.adextpowervalue, model.io_states)
+                                    fillMode: Image.PreserveAspectFit
                                     Layout.alignment: Qt.AlignRight
                                 }
                             } //ColumnLayout
@@ -477,14 +487,30 @@ App {
             NavigationStack {
                 Page {
                     title: 'Settings'
-                    ColumnLayout {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.verticalCenter: parent.verticalCenter
+                    Column {
+//                        topPadding: dp(20)
+                        width: parent.width
                         spacing: dp(2)
+                        topPadding: dp(20)
+
+                        Row {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            IconButton {
+                                id: userIcon
+                                icon: IconType.user
+                                size: sp(32)
+                            }
+
+                            AppText {
+                                text: mainApp.username
+                                anchors.bottom: userIcon.bottom
+                                fontSize: 32
+                            }
+                        }
 
                         AppButton {
                             text: 'Log Out'
-                            anchors.verticalCenter: parent
+                            anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
                                 console.log('Logging out')
                                 mainApp.logOut()
@@ -583,6 +609,7 @@ App {
                         console.log('Error response: ', err.response)
                     }
                 });
+//                navItemMap.navigationStack.moiMap.meiMap.fitViewportToVisibleMapItems()
             }
             else {
                 console.log('Error message: ', err.message)
@@ -641,9 +668,10 @@ App {
                     console.log('got new token:', res.body.token)
                     nativeUtils.setKeychainValue("token", res.body.token)
                     mainApp.token = res.body.token
-                    mainApp.loadVehiloc()
+                    mainApp.username = res.body.username
+                    mainApp.usertype = res.body.usertype
+                    mainApp.loadVehiloc()                    
                     mainApp.loadGeofences()
-//                    map.fitViewportToVisibleMapItems()
                 }
                 else {
                     console.log(err.message)
