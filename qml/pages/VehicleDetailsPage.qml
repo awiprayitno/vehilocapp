@@ -68,13 +68,13 @@ FlickablePage {
             inputlogtext = inputName + ' was ' + inputState;
         }
         // show input no if user admin
-//        if ({{current_user.type}} == 99) {
-//            if (jdetail.new_state) {
-//                inputlogtext += ' <span style="background-color:lime;">' + jdetail.input_no + '</span> ';
-//            } else {
-//                inputlogtext += ' <span>' + jdetail.input_no + '</span> ';
-//            }
-//        }
+        if (mainApp.usertype === 99) {
+            if (data.new_state) {
+                inputlogtext += ' ' + data.input_no ;
+            } else {
+                inputlogtext += ' ' + data.input_no;
+            }
+        }
 
         return inputlogtext
     }
