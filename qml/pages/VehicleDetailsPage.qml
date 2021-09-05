@@ -372,7 +372,7 @@ FlickablePage {
             DateTimeAxis {
                 id: dtAxis
                 format: 'h:mm'
-                tickCount: 5
+                tickCount: 6
             }
 
             ValueAxis {
@@ -442,6 +442,7 @@ FlickablePage {
                             sliderData.value = listData.findIndex(entry => entry.gpsdt === modelData.enddt)
 
                             currentData = listData[sliderData.value]
+                            vhcDetailsPage.flickable.contentY = 0
                         }
                     }
                 }

@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>qml</file>
+        <file>qml/Main.qml</file>
+	<file>qml/pages/VehicleDetailsPage.qml</file>
+	<file>qml/pages/LoginPage.qml</file>
     </qresource>
 </RCC>
