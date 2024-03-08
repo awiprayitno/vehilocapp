@@ -32,7 +32,7 @@ class _NarationWidgetState extends State<NarationWidget> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.stopNumber = 0;
     });
   }
@@ -67,18 +67,25 @@ class _NarationWidgetState extends State<NarationWidget> {
                   dataRowMaxHeight: 55,
                   columns: const [
                     DataColumn(
-                      label: Text('Waktu',
+                      label: SizedBox(
+                        width: 120, 
+                        child: Text('Waktu',
                           style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins')),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins'
+                          ),
+                        ),
+                      ),
                     ),
                     DataColumn(
                       label: Text('Narasi',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins')),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Poppins'
+                        ),
+                      ),
                     ),
                   ],
                   rows: widget.narationData.map((jDetails) {
@@ -92,9 +99,12 @@ class _NarationWidgetState extends State<NarationWidget> {
                     return DataRow(
                       cells: [
                         DataCell(
-                          Text(
-                            '${formatTime(jDetails.startdt)} - ${formatTime(jDetails.enddt)}            ',
-                            style: const TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                          SizedBox(
+                            width: 120, 
+                            child: Text(
+                              '${formatTime(jDetails.startdt)} - ${formatTime(jDetails.enddt)}',
+                              style: const TextStyle(fontSize: 16, fontFamily: 'Poppins'),
+                            ),
                           ),
                         ),
                         DataCell(
@@ -107,7 +117,6 @@ class _NarationWidgetState extends State<NarationWidget> {
                                         buttonPressedMap[jDetails.startdt] = true;
                                         addresses[jDetails.startdt] = _address;
                                       });
-                                      // widget.logger.i('Alamat: $_address');
                                     }
                                   },
                                   child: IntrinsicHeight(
@@ -117,27 +126,24 @@ class _NarationWidgetState extends State<NarationWidget> {
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.start, 
                                             children: [
                                               Text(
                                                 formatNaration(jDetails),
                                                 style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontFamily: 'Poppins'),
+                                                  fontSize: 16,
+                                                  fontFamily: 'Poppins'
+                                                ),
                                               ),
                                               if (buttonPressed)
-                                                Wrap(
-                                                    alignment: WrapAlignment.spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        address,
-                                                        style: const TextStyle(
-                                                          fontSize: 10,
-                                                          fontFamily: 'Poppins',
-                                                        ),
-                                                      ),
-                                                    ],
-                                                ),  
+                                                Text(
+                                                  address,
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontFamily: 'Poppins',
+                                                  ),
+                                                ),
                                             ],
                                           ),
                                         ),
@@ -170,12 +176,6 @@ class _NarationWidgetState extends State<NarationWidget> {
                                             ],
                                           ),
                                         )
-                                        // IconButton(
-                                        //   icon: Icon(Icons.map, color: GlobalColor.mainColor),
-                                        //   onPressed: () {
-                                        //     widget.onMapButtonPressed?.call(jDetails.lat, jDetails.lon);
-                                        //   },
-                                        // ),
                                       ],
                                     ),
                                   ),
@@ -191,8 +191,9 @@ class _NarationWidgetState extends State<NarationWidget> {
                                             Text(
                                               formatNaration(jDetails),
                                               style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontFamily: 'Poppins'),
+                                                fontSize: 16,
+                                                fontFamily: 'Poppins'
+                                              ),
                                             ),
                                           ],
                                         ),
