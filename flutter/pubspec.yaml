@@ -1,0 +1,68 @@
+name: VehiLoc
+description: "Cara mudah tracking kemana saja armada Anda pergi."
+publish_to: "none"
+version: 2.0.0+7
+
+environment:
+  sdk: ">=3.2.5 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  provider: ^6.1.1 # state management
+  intl: ^0.19.0 # to use international function
+  connectivity_plus: ^5.0.2 # to monitor the internet connection status 
+  shared_preferences: ^2.2.2 # to store data on user devices
+  flutter_svg: ^2.0.9 # to handle svg
+  google_fonts: ^6.1.0 # to use font google
+  hexcolor: ^3.0.1 # to use color without 0xff
+  google_maps_flutter: ^2.6.0 # to use google map
+  build_runner: ^2.4.8 # to run code generators
+  http: ^1.2.0 # HTTP client for making requests to servers
+  flutter_slidable: ^0.6.0 # to provides a widget that allows items in a list to be slid to display actions
+  dio: ^5.4.0 # to provides powerfull http client
+  infinite_scroll_pagination: ^4.0.0 # to provides infinite pagination feature for lists
+  flutter_native_splash: ^2.3.2 # to add customizable native splash screens 
+  syncfusion_flutter_charts: ^24.2.3+1 # to provides various types of charts for use
+  image_gallery_saver: ^2.0.3 # to save images from the gallery
+  flutter_launcher_icons: "^0.13.1" # to generate customizable application launcher icons
+  persistent_bottom_nav_bar: ^5.0.2 # to create and manage persistent bottom navigation
+  permission_handler: ^11.3.0 # to manage permission requests and checks
+  flutter_switch: ^0.3.2
+  package_info_plus: ^4.2.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/logo/vehiloc-logo.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#7D0A0A"
+  image: assets/logo/vehiloc-logos.png
+  android_12:
+    color: "#7D0A0A"
+    image: assets/logo/vehiloc-logos.png
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  logger: ^2.0.2+1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo/vehiloc-logo.png
+    - assets/logo/vehiloc-logo-text.png
+    - assets/icons/
+    - assets/icons/navigate.png
+    - assets/icons/navigate-red.png
+    - assets/icons/navigate-green.png
+    - assets/icons/arrow_green.png
+    - assets/icons/arrow_red.png
+    - assets/icons/arrow_gray.png
