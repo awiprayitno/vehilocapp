@@ -1,7 +1,7 @@
 name: VehiLoc
 description: "Cara mudah tracking kemana saja armada Anda pergi."
 publish_to: "none"
-version: 2.0.0+8
+version: 2.0.0+9
 
 environment:
   sdk: ">=3.2.5 <4.0.0"
@@ -31,6 +31,7 @@ dependencies:
   permission_handler: ^11.3.0 # to manage permission requests and checks
   flutter_switch: ^0.3.2
   package_info_plus: ^4.2.0
+  carousel_slider: ^4.2.1
 
 flutter_launcher_icons:
   android: "launcher_icon"

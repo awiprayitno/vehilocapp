@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,6 +10,7 @@ import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
 import 'package:logger/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:VehiLoc/core/model/response_image_promo.dart';
 
 class LoginView extends StatefulWidget {
   final TextEditingController? usernameController; 
@@ -41,6 +43,7 @@ class _LoginViewState extends State<LoginView> {
 
   late String version = '';
   late String buildNumber = '';
+  Carousel? carousel;
 
   @override
   void initState() {
@@ -48,6 +51,7 @@ class _LoginViewState extends State<LoginView> {
     _checkTokenAndRedirect();
     _usernameController.text = widget.usernameController?.text ?? '';
     _initPackageInfo();
+    fetchCarouselData();
   }
 
   Future<void> _initPackageInfo() async {
@@ -57,6 +61,26 @@ class _LoginViewState extends State<LoginView> {
       buildNumber = packageInfo.buildNumber;
     });
   }
+
+  Future<void> fetchCarouselData() async {
+    const String apiUrl = 'https://vehiloc.net/rest/promo_pictures';
+
+    try {
+      final http.Response response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        setState(() {
+          carousel = Carousel.fromJson(responseData);
+        });
+      } else {
+        throw Exception('Failed to load carousel data');
+      }
+    } catch (error) {
+      print('Error fetching carousel data: $error');
+    }
+  }
+
 
   Future<void> _checkTokenAndRedirect() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -121,8 +145,7 @@ class _LoginViewState extends State<LoginView> {
     final String username = _usernameController.text.trim();
     final String password = _passwordController.text.trim();
 
-    final String basicAuth =
-        'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+    final String basicAuth = 'Basic ${base64Encode(utf8.encode('$username:$password'))}';
 
     const String apiUrl = 'https://vehiloc.net/rest/token';
 
@@ -169,6 +192,9 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isTablet = MediaQuery.of(context).size.width > 600;
+    final bool isIpad = MediaQuery.of(context).size.width > 900;
+    final double carouselHeight = isIpad ? MediaQuery.of(context).size.height * 0.8 : isTablet ? MediaQuery.of(context).size.height * 0.4  : MediaQuery.of(context).size.height * 0.2;
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
@@ -218,10 +244,8 @@ class _LoginViewState extends State<LoginView> {
                   child: ElevatedButton(
                     onPressed: isLoading ? null : _login,
                     style: ButtonStyle(
-                      minimumSize: MaterialStateProperty.all(
-                          Size(MediaQuery.of(context).size.width * 1.0, 50)),
-                      backgroundColor:
-                          MaterialStateProperty.all(GlobalColor.mainColor),
+                      minimumSize: MaterialStateProperty.all(Size(MediaQuery.of(context).size.width * 1.0, 50)),
+                      backgroundColor: MaterialStateProperty.all(GlobalColor.mainColor),
                       shape: MaterialStateProperty.all(RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       )),
@@ -265,6 +289,35 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 10),
+                CarouselSlider(
+                  options: CarouselOptions(
+                    height: carouselHeight,
+                    autoPlay: true,
+                    autoPlayInterval: const Duration(seconds: 3),
+                    autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                    autoPlayCurve: Curves.fastOutSlowIn,
+                    viewportFraction: 0.8,
+                    enlargeCenterPage: true
+                  ),
+                  items: carousel?.data?.map((String imageUrl) {
+                    return Builder(
+                      builder: (BuildContext context) {
+                        return Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                          decoration: const BoxDecoration(
+                            color: Colors.transparent,
+                          ),
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit.fitWidth,
+                          ),
+                        );
+                      },
+                    );
+                  }).toList() ?? [],
                 ),
               ],
             ),
