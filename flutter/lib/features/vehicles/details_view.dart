@@ -397,6 +397,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return DefaultTabController(
       length: 4,
       initialIndex: _selectedTabIndex,
@@ -492,148 +493,141 @@ class _DetailsPageViewState extends State<DetailsPageView>
           children: [
             Container(
               margin: const EdgeInsets.only(top: 5),
-              child: SizedBox(
-                  height: 50,
-                  child: Row(
-                    mainAxisAlignment: _selectedTabIndex == 0
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.center,
-                    // mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _selectedTabIndex == 0
-                          ? SizedBox(
-                              width: 30,
-                              child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedDate = _selectedDate
-                                        .subtract(const Duration(days: 1));
-                                    _updateStartEpoch();
-                                  });
-                                },
-                                icon: const Icon(Icons.arrow_back_ios_new,
-                                    size: 20),
-                              ),
-                            )
-                          : Expanded(
-                              child: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedDate = _selectedDate
-                                        .subtract(const Duration(days: 1));
-                                    _updateStartEpoch();
-                                  });
-                                },
-                                icon: const Icon(Icons.arrow_back_ios_new,
-                                    size: 20),
-                              ),
-                            ),
-                            SizedBox(width: 5,),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: GlobalColor.buttonColor.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              spreadRadius: 1.5,
-                              blurRadius: 2,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: TextButton(
-                          onPressed: () {
-                            _selectDate(context);
-                          },
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Visibility(
-                                visible: !_isLoading,
-                                child: Text(
-                                  '${_selectedDate.day} ${DateFormat.MMM().format(_selectedDate)}, ${_selectedDate.year}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: _selectedTabIndex == 0 ? 14 : 14,
-                                    color: GlobalColor.textColor,
-                                  ),
-                                ),
-                              ),
-                              Visibility(
-                                visible: _isLoading,
-                                child: const CircularProgressIndicator(),
-                              ),
-                            ],
+              child: Row(
+                mainAxisAlignment: _selectedTabIndex == 0
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  _selectedTabIndex == 0
+                      ? SizedBox(
+                          width: 30,
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+                                _updateStartEpoch();
+                              });
+                            },
+                            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                          ),
+                        )
+                      : Expanded(
+                          child: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+                                _updateStartEpoch();
+                              });
+                            },
+                            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
                           ),
                         ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: GlobalColor.buttonColor.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            spreadRadius: 1.5,
+                            blurRadius: 2,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      _selectedTabIndex == 0
-                          ? SizedBox(
-                              width: 35,
-                              child: IconButton(
-                                onPressed: _isForwardButtonEnabled()
-                                    ? () {
-                                        setState(() {
-                                          _selectedDate = _selectedDate
-                                              .add(const Duration(days: 1));
-                                          _updateStartEpoch();
-                                        });
-                                      }
-                                    : null,
-                                icon: const Icon(Icons.arrow_forward_ios,
-                                    size: 20),
-                              ),
-                            )
-                          : Expanded(
-                              child: IconButton(
-                                onPressed: _isForwardButtonEnabled()
-                                    ? () {
-                                        setState(() {
-                                          _selectedDate = _selectedDate.add(const Duration(days: 1));
-                                          _updateStartEpoch();
-                                        });
-                                      }
-                                    : null,
-                                icon: const Icon(Icons.arrow_forward_ios,size: 20),
+                      child: TextButton(
+                        onPressed: () {
+                          _selectDate(context);
+                        },
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Visibility(
+                              visible: !_isLoading,
+                              child: Text(
+                                '${_selectedDate.day} ${DateFormat.MMM().format(_selectedDate)}, ${_selectedDate.year}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: _selectedTabIndex == 0 ? 14 : 14,
+                                  color: GlobalColor.textColor,
+                                ),
                               ),
                             ),
-                      if (_selectedTabIndex == 0)
-                        Row(
-                          children: [
-                            const Icon(Icons.access_time, size: 25, color: Colors.black),
-                            const SizedBox(width: 3),
-                            Text(
-                              _getTimeForSliderValue(_sliderValue),
-                              style: GoogleFonts.poppins(),
+                            Visibility(
+                              visible: _isLoading,
+                              child: const CircularProgressIndicator(),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 6),
-                      if (_selectedTabIndex == 0)
-                        Row(
-                          children: [
-                            const Icon(Icons.speed, size: 25, color: Colors.black),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${_getSpeedForSliderValue(_sliderValue)} kmh',
-                              style: GoogleFonts.poppins(),
-                            ),
-                          ],
+                      ),
+                    ),
+                  ),
+                  _selectedTabIndex == 0
+                      ? SizedBox(
+                          width: 35,
+                          child: IconButton(
+                            onPressed: _isForwardButtonEnabled()
+                                ? () {
+                                    setState(() {
+                                      _selectedDate = _selectedDate.add(const Duration(days: 1));
+                                      _updateStartEpoch();
+                                    });
+                                  }
+                                : null,
+                            icon: const Icon(Icons.arrow_forward_ios, size: 20),
+                          ),
+                        )
+                      : Expanded(
+                          child: IconButton(
+                            onPressed: _isForwardButtonEnabled()
+                                ? () {
+                                    setState(() {
+                                      _selectedDate = _selectedDate.add(const Duration(days: 1));
+                                      _updateStartEpoch();
+                                    });
+                                  }
+                                : null,
+                            icon: const Icon(Icons.arrow_forward_ios, size: 20),
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                      if (_selectedTabIndex == 0 && widget.type == 4)
-                        Row(
-                          children: [
-                            const Icon(Icons.thermostat, size: 25, color: Colors.black),
-                            const SizedBox(width: 0),
-                            Text(
-                              '${_getTemperatureForSliderValue(_sliderValue)}°',
-                              style: GoogleFonts.poppins(),
-                            ),
-                          ],
+                  if (_selectedTabIndex == 0)
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 25, color: Colors.black),
+                        const SizedBox(width: 3),
+                        Text(
+                          _getTimeForSliderValue(_sliderValue),
+                          style: GoogleFonts.poppins(),
                         ),
-                    ],
-                  )),
+                      ],
+                    ),
+                  const SizedBox(width: 6),
+                  if (_selectedTabIndex == 0)
+                    Row(
+                      children: [
+                        const Icon(Icons.speed, size: 25, color: Colors.black),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${_getSpeedForSliderValue(_sliderValue)} kmh',
+                          style: GoogleFonts.poppins(),
+                        ),
+                      ],
+                    ),
+                  if (_selectedTabIndex == 0 && widget.type == 4)
+                    Row(
+                      children: [
+                        const Icon(Icons.thermostat, size: 25, color: Colors.black),
+                        // const SizedBox(width: 10),
+                        Text(
+                          '${_getTemperatureForSliderValue(_sliderValue)}°',
+                          style: GoogleFonts.poppins(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 10,)
+                ],
+              ),
             ),
             Expanded(
               child: MediaQuery.removePadding(
@@ -795,8 +789,6 @@ class _DetailsPageViewState extends State<DetailsPageView>
     double maxTemperature = dailyData.map((data) => data.temp / 10).reduce((value, element) => value > element ? value : element);
     double minSpeed = dailyData.map((data) => data.speed.toDouble()).reduce((value, element) => value < element ? value : element);
     double maxSpeed = dailyData.map((data) => data.speed.toDouble()).reduce((value, element) => value > element ? value : element);
-
-    bool isSpeedZero = minSpeed == 0 && maxSpeed == 0;
 
     return Column(
       children: [
@@ -1029,8 +1021,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
 
         if (dailyData.isNotEmpty) {
           final DataItem currentDaily = dailyData.first;
-          _initialCameraPosition =
-              LatLng(currentDaily.latitude, currentDaily.longitude);
+          _initialCameraPosition = LatLng(currentDaily.latitude, currentDaily.longitude);
 
           // _mapController.animateCamera(
           //   CameraUpdate.newLatLng(_initialCameraPosition),
@@ -1085,10 +1076,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
       selectableDayPredicate: (DateTime date) {
-        DateTime lastSelectableDate = DateTime.fromMillisecondsSinceEpoch(
-          widget.initialGpsdt * 1000,
-          isUtc: true,
-        ).add(const Duration(days: 1));
+        DateTime lastSelectableDate = DateTime.fromMillisecondsSinceEpoch(widget.initialGpsdt * 1000, isUtc: true).add(const Duration(days: 1));
         return date.isBefore(lastSelectableDate);
       },
       builder: (BuildContext context, Widget? child) {
@@ -1098,18 +1086,13 @@ class _DetailsPageViewState extends State<DetailsPageView>
               primary: GlobalColor.mainColor,
               onPrimary: Colors.white,
             ),
-            textTheme:
-                GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+            textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
           ),
           child: child!,
         );
       },
     );
     if (picked != null && picked != _selectedDate) {
-      DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
-        widget.initialGpsdt * 1000,
-        isUtc: true,
-      );
       DateTime pickedWIB = picked.add(const Duration(hours: 7));
       if (pickedWIB !=
           DateTime(pickedWIB.year, pickedWIB.month, pickedWIB.day)) {
@@ -1119,8 +1102,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
         _updateStartEpoch();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              "Anda tidak dapat memilih tanggal yang cocok dengan tanggal data."),
+          content: Text("Anda tidak dapat memilih tanggal yang cocok dengan tanggal data."),
         ));
       }
     }
@@ -1131,8 +1113,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
     final int startEpoch = widget.gpsdt;
 
     try {
-      final Data dataAll =
-          await apiService.fetchDailyHistory(vehicleId, startEpoch);
+      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
 
       return dataAll.inputlogs;
     } catch (e) {
