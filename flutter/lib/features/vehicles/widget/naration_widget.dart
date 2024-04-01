@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:VehiLoc/core/model/response_daily.dart';
 import 'package:VehiLoc/core/utils/naration_func.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
-import 'package:logger/logger.dart';
 
 class NarationWidget extends StatefulWidget {
-  final Logger logger = Logger();
   final ApiService apiService = ApiService();
   final List<JdetailsItem> narationData;
   final Future<List<JdetailsItem>> Function() fetchNarationData;
@@ -24,7 +22,9 @@ class NarationWidget extends StatefulWidget {
   _NarationWidgetState createState() => _NarationWidgetState();
 }
 
-class _NarationWidgetState extends State<NarationWidget> {
+class _NarationWidgetState extends State<NarationWidget> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin<NarationWidget> {
+  @override
+  bool get wantKeepAlive => true;
   Map<int, String> addresses = {};
   final Map<int, bool> buttonPressedMap = {};
   bool isFetchingAddress = false;
@@ -39,8 +39,28 @@ class _NarationWidgetState extends State<NarationWidget> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (widget.narationData.isEmpty) {
-      return const Center(child: Text('No Journey Available'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/icons/no-event.png',
+              height: 100,
+              width: 100,
+            ),
+            const SizedBox(height: 10), 
+            const Text(
+              'No Journey available',
+              style: TextStyle(
+                fontSize: 18,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return SingleChildScrollView(
@@ -52,7 +72,7 @@ class _NarationWidgetState extends State<NarationWidget> {
           child: widget.narationData.isEmpty
               ? const Center(
                   child: Text(
-                    'No data available',
+                    'No Data available',
                     style: TextStyle(
                       fontSize: 18,
                       fontFamily: 'Poppins',
@@ -112,10 +132,10 @@ class _NarationWidgetState extends State<NarationWidget> {
                               ? TableRowInkWell(
                                   onTap: () async {
                                     if (addresses[jDetails.startdt] == null) {
-                                      final _address = await fetchGeocode(jDetails.lat, jDetails.lon);
+                                      final address0 = await fetchGeocode(jDetails.lat, jDetails.lon);
                                       setState(() {
                                         buttonPressedMap[jDetails.startdt] = true;
-                                        addresses[jDetails.startdt] = _address;
+                                        addresses[jDetails.startdt] = address0;
                                       });
                                     }
                                   },
@@ -213,9 +233,9 @@ class _NarationWidgetState extends State<NarationWidget> {
 
   Future<String> fetchGeocode(double lat, double lon) async {
     try {
-      final _address = await widget.apiService.fetchAddress(lat, lon);
+      final address = await widget.apiService.fetchAddress(lat, lon);
       widget.stopNumber = 0;
-      return _address;
+      return address;
     } catch (e) {
       // widget.logger.e("Error fetching address: $e");
       return "";

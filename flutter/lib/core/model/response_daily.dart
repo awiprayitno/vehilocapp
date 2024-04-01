@@ -55,6 +55,8 @@ class DataItem {
     );
   }
 
+  get boxNo => null;
+
   static String _calculateColorBox(int speed) {
     if (speed == 0) {
       return 'white';

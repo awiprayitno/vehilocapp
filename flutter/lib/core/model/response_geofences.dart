@@ -11,7 +11,7 @@ class Geofences {
     if (json['geometry'] != null) {
       geometry = <Geometry>[];
       json['geometry'].forEach((v) {
-        geometry!.add(new Geometry.fromJson(v));
+        geometry!.add(Geometry.fromJson(v));
       });
     }
     id = json['id'];
@@ -19,13 +19,13 @@ class Geofences {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['customer_id'] = this.customerId;
-    if (this.geometry != null) {
-      data['geometry'] = this.geometry!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['customer_id'] = customerId;
+    if (geometry != null) {
+      data['geometry'] = geometry!.map((v) => v.toJson()).toList();
     }
-    data['id'] = this.id;
-    data['name'] = this.name;
+    data['id'] = id;
+    data['name'] = name;
     return data;
   }
 }
@@ -42,9 +42,9 @@ class Geometry {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['latitude'] = this.latitude;
-    data['longitude'] = this.longitude;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['latitude'] = latitude;
+    data['longitude'] = longitude;
     return data;
   }
 }

@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
 import 'package:VehiLoc/features/auth/widget/form_login.dart';
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
-import 'package:logger/logger.dart';
+import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:VehiLoc/core/model/response_image_promo.dart';
@@ -31,15 +31,6 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool isLoading = false;
-  final Logger logger = Logger(
-    printer: PrettyPrinter(
-        methodCount: 2,
-        errorMethodCount: 8,
-        lineLength: 120,
-        colors: true,
-        printEmojis: true,
-        printTime: true),
-  );
 
   late String version = '';
   late String buildNumber = '';
@@ -48,7 +39,6 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
-    _checkTokenAndRedirect();
     _usernameController.text = widget.usernameController?.text ?? '';
     _initPackageInfo();
     fetchCarouselData();
@@ -64,11 +54,11 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> fetchCarouselData() async {
     const String apiUrl = 'https://vehiloc.net/rest/promo_pictures';
-
+  
     try {
       final http.Response response = await http.get(Uri.parse(apiUrl));
-
-      if (response.statusCode == 200) {
+  
+      if (response.statusCode == 200 && mounted) { 
         final Map<String, dynamic> responseData = json.decode(response.body);
         setState(() {
           carousel = Carousel.fromJson(responseData);
@@ -77,24 +67,7 @@ class _LoginViewState extends State<LoginView> {
         throw Exception('Failed to load carousel data');
       }
     } catch (error) {
-      print('Error fetching carousel data: $error');
-    }
-  }
-
-
-  Future<void> _checkTokenAndRedirect() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-
-    if (token != null && token.isNotEmpty) {
-      Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => BottomBar()),
-            (Route<dynamic> route) => false,
-        );
-      LoginState.userSalt = prefs.getString("customerSalts")!;
-    } else {
-      _fetchAndCacheCustomerSalts();
-      _requestLocationPermission();
+      logger.e('Error fetching carousel data: $error');
     }
   }
 
@@ -106,7 +79,7 @@ class _LoginViewState extends State<LoginView> {
 
     if (username != null && password != null) {
       final String basicAuth =
-          'Basic ' + base64Encode(utf8.encode('$username:$password'));
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
 
       try {
         // logger.i("test : ${basicAuth} ${Uri.parse(apiUrl)}");
@@ -169,7 +142,7 @@ class _LoginViewState extends State<LoginView> {
         await _requestLocationPermission();
 
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => BottomBar()),
+            MaterialPageRoute(builder: (context) => const BottomBar()),
             (Route<dynamic> route) => false,
         );
       } else {
@@ -307,12 +280,16 @@ class _LoginViewState extends State<LoginView> {
                         return Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(10.0), 
                           ),
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.fitWidth,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10.0), 
+                            child: Image.network(
+                              imageUrl,
+                              fit: BoxFit.fitWidth,
+                            ),
                           ),
                         );
                       },

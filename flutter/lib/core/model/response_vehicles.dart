@@ -10,6 +10,7 @@ class Vehicle {
   int? type;
   int? baseMcc;
   int? bearing;
+  String? imei;
   List<Sensor>? sensors;
   bool isTapped = false;
 
@@ -25,6 +26,7 @@ class Vehicle {
     this.type,
     this.baseMcc,
     this.bearing,
+    this.imei,
     this.sensors,
   });
 
@@ -40,6 +42,7 @@ class Vehicle {
     type = json['type'];
     baseMcc = json['base_mcc'];
     bearing = json['bearing'];
+    imei = json['imei'];
     if (json['sensors'] != null) {
       sensors = <Sensor>[];
       json['sensors'].forEach((v) {
@@ -49,7 +52,7 @@ class Vehicle {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['customer_name'] = customerName;
     data['name'] = name;
     data['plate_no'] = plateNo;
@@ -61,6 +64,7 @@ class Vehicle {
     data['type'] = type;
     data['base_mcc'] = baseMcc;
     data['bearing'] = bearing;
+    data['imei'] = imei;
     if (sensors != null) {
       data['sensors'] = sensors!.map((v) => v.toJson()).toList();
     }

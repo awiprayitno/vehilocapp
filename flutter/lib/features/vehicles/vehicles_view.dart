@@ -8,9 +8,9 @@ import 'package:VehiLoc/core/utils/vehicle_func.dart';
 import 'package:VehiLoc/core/Api/api_provider.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:VehiLoc/features/vehicles/details_view.dart';
-import 'package:logger/logger.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:VehiLoc/core/Api/websocket.dart';
+import 'package:VehiLoc/core/utils/logger.dart';
 
 class VehicleView extends StatefulWidget {
   const VehicleView({Key? key}) : super(key: key);
@@ -19,17 +19,9 @@ class VehicleView extends StatefulWidget {
   _VehicleViewState createState() => _VehicleViewState();
 }
 
-class _VehicleViewState extends State<VehicleView> {
-  final Logger logger = Logger(
-    printer: PrettyPrinter(
-        methodCount: 2,
-        errorMethodCount: 8, 
-        lineLength: 120,
-        colors: true, 
-        printEmojis: true,
-        printTime: true
-        ),
-  );
+class _VehicleViewState extends State<VehicleView> with AutomaticKeepAliveClientMixin<VehicleView>{
+  @override
+  bool get wantKeepAlive => true;
   final ApiService apiService = ApiService();
   late List<Vehicle> _allVehicles;
   late List<Vehicle> _filteredVehicles;
@@ -82,6 +74,36 @@ class _VehicleViewState extends State<VehicleView> {
     //     logger.i('WebSocket closed');
     //   },
     // );
+  }
+  void showModal() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.close,
+              color: Colors.red,
+              size: 88,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'You cannot access details because the vehicle is disabled',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      );
+      },
+    );
   }
 
   void fetchGeocode(Vehicle vehicle) async {
@@ -139,36 +161,42 @@ class _VehicleViewState extends State<VehicleView> {
   }
 
   void _convertAndNavigateToDetailsPage(Vehicle vehicle) {
-    DateTime gpsdtWIB;
-    final DateTime now = DateTime.now();
-    final DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
-      vehicle.gpsdt! * 1000,
-      isUtc: true,
-    );
+    if (vehicle.gpsdt != null) {
+      final DateTime now = DateTime.now();
+      final DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
+        vehicle.gpsdt! * 1000,
+        isUtc: true,
+      );
 
-    if (gpsdtUtc.year == now.year && gpsdtUtc.month == now.month && gpsdtUtc.day == now.day) {
-      gpsdtWIB = DateTime(now.year, now.month, now.day, 0, 0, 0);
+      DateTime gpsdtWIB;
+      if (gpsdtUtc.year == now.year && gpsdtUtc.month == now.month && gpsdtUtc.day == now.day) {
+        gpsdtWIB = DateTime(now.year, now.month, now.day, 0, 0, 0);
+      } else {
+        gpsdtWIB = DateTime(gpsdtUtc.year, gpsdtUtc.month, gpsdtUtc.day, 0, 0, 0);
+      }
+
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: DetailsPageView(
+          vehicleId: vehicle.vehicleId!,
+          // vehicleLat: vehicle.lat!,
+          // vehicleLon: vehicle.lon!,
+          vehicleName: vehicle.name!,
+          gpsdt: gpsdtWIB.millisecondsSinceEpoch ~/ 1000,
+          type: vehicle.type!,
+          imei: vehicle.imei!,
+        ),
+        withNavBar: true,
+        pageTransitionAnimation: PageTransitionAnimation.fade,
+      );
     } else {
-      gpsdtWIB = DateTime(gpsdtUtc.year, gpsdtUtc.month, gpsdtUtc.day, 0, 0, 0);
+      showModal();
     }
-
-    PersistentNavBarNavigator.pushNewScreen(
-      context,
-      screen: DetailsPageView(
-        vehicleId: vehicle.vehicleId!,
-        // vehicleLat: vehicle.lat!,
-        // vehicleLon: vehicle.lon!,
-        vehicleName: vehicle.name!,
-        gpsdt: gpsdtWIB.millisecondsSinceEpoch ~/ 1000,
-        type: vehicle.type!,
-      ),
-      withNavBar: true,
-      pageTransitionAnimation: PageTransitionAnimation.fade,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return MaterialApp(
       theme: ThemeData(
         textTheme: GoogleFonts.poppinsTextTheme(),
@@ -236,15 +264,17 @@ class _VehicleViewState extends State<VehicleView> {
                               color: GlobalColor.mainColor,
                               icon: Icons.map_outlined,
                               onTap: () {
-                                PersistentNavBarNavigator.pushNewScreen(
-                                  context,
-                                  screen: BottomBar(
-                                    lat: vehicle.lat!,
-                                    lon: vehicle.lon!,
-                                  ),
-                                  withNavBar: false,
-                                  pageTransitionAnimation: PageTransitionAnimation.fade,
-                                );
+                                // PersistentNavBarNavigator.pushNewScreen(
+                                //   context,
+                                //   screen: BottomBar(
+                                //     lat: vehicle.lat!,
+                                //     lon: vehicle.lon!,
+                                //   ),
+                                //   withNavBar: false,
+                                //   pageTransitionAnimation: PageTransitionAnimation.fade,
+                                // );
+                                // BottomBar.currentIndex = 0;
+                                BottomBar.globalSetState?.call(vehicle.lat!, vehicle.lon!,);
                               },
                             ),
                           ],

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:VehiLoc/core/model/response_daily.dart';
-class EventWidget extends StatelessWidget {
+
+class EventWidget extends StatefulWidget {
   final List<InputLogsItem> eventData;
 
   const EventWidget({
@@ -10,9 +11,38 @@ class EventWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _EventWidgetState createState() => _EventWidgetState();
+}
+
+class _EventWidgetState extends State<EventWidget> with AutomaticKeepAliveClientMixin<EventWidget> {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
-    if (eventData.isEmpty) {
-      return const Center(child: Text('No Event Available'));
+    super.build(context); 
+
+    if (widget.eventData.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/icons/no-event.png',
+              height: 100,
+              width: 100,
+            ),
+            const SizedBox(height: 10), 
+            const Text(
+              'No Event available',
+              style: TextStyle(
+                fontSize: 18,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return SingleChildScrollView(
@@ -44,7 +74,7 @@ class EventWidget extends StatelessWidget {
                 ),
               ),
             ],
-            rows: eventData.map((inputLogs) {
+            rows: widget.eventData.map((inputLogs) {
               return DataRow(cells: [
                 DataCell(Text(
                   DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(inputLogs.dt * 1000)),

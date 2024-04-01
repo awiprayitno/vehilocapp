@@ -12,10 +12,10 @@ class Carousel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['data'] = this.data;
-    data['result'] = this.result;
-    data['success'] = this.success;
+    data['result'] = result;
+    data['success'] = success;
     return data;
   }
 }

@@ -1,4 +1,5 @@
-// import 'package:VehiLoc/core/model/response_geofences.dart';
+import 'package:VehiLoc/features/vehicles/widget/dashcam_widget.dart';
+import 'package:VehiLoc/features/vehicles/widget/dms_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,16 +12,17 @@ import 'package:VehiLoc/core/utils/colors.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:VehiLoc/features/vehicles/widget/custom_slider.dart';
+import 'package:VehiLoc/core/utils/custom_slider.dart';
 import 'package:VehiLoc/features/vehicles/widget/naration_widget.dart';
 import 'package:VehiLoc/features/vehicles/widget/event_widget.dart';
-import 'package:logger/logger.dart';
+import 'package:VehiLoc/core/utils/logger.dart';
 
 class DetailsPageView extends StatefulWidget {
   final int vehicleId;
   final String? vehicleName;
   final int? type;
   late int gpsdt;
+  late String? imei;
   late int initialGpsdt;
   late List<DataItem> dataItems;
 
@@ -29,6 +31,7 @@ class DetailsPageView extends StatefulWidget {
     required this.vehicleId,
     required this.vehicleName,
     required this.gpsdt,
+    required this.imei,
     required this.type,
   }) : super(key: key) {
     initialGpsdt = gpsdt;
@@ -39,80 +42,71 @@ class DetailsPageView extends StatefulWidget {
   _DetailsPageViewState createState() => _DetailsPageViewState();
 }
 
-class _DetailsPageViewState extends State<DetailsPageView>
-    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin<DetailsPageView> {
+class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin<DetailsPageView> {
   @override
   bool get wantKeepAlive => true;
-  final Logger logger = Logger(
-    printer: PrettyPrinter(
-        methodCount: 2,
-        errorMethodCount: 8,
-        lineLength: 120,
-        colors: true,
-        printEmojis: true,
-        printTime: true),
-  );
+  late DateTime startDt;
+  late int _endDt;
   final ApiService apiService = ApiService();
-
   List<Marker> stopMarkers = [];
-
-  // List<Geofences> _geofencesList = [];
-
   late LatLng _initialCameraPosition;
-
   final _cartesianChartKey = GlobalKey<SfCartesianChartState>();
-
   late DateTime _selectedDate;
   double _sliderValue = 100.0;
-
   late BitmapDescriptor _greenMarkerIcon;
   late BitmapDescriptor _redMarkerIcon;
-
   int stopNumber = 0;
-
   List<Data> allData = [];
   List<DataItem> dailyData = [];
   List<InputLogsItem> inputData = [];
   List<JdetailsItem> detailsItem = [];
-
   late GoogleMapController _mapController;
-
   int _selectedTabIndex = 0;
   late TabController _tabController;
-
   bool exportingImage = false;
-
   bool _isLoading = false;
-  bool _isLoadingChangeStopMarker = false;
-
   bool _isSpeedChartVisible = true;
   bool _isTemperatureChartVisible = true;
-
   double? stopLatitude;
   double? stopLongitude;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    logger.e("hasillllllll : ${widget.imei}");
+    _tabController = TabController(length: widget.type == 0 || widget.type == 12345 ? 5 : 4, vsync: this);
     _tabController.addListener(_handleTabSelection);
 
     DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
       widget.gpsdt * 1000,
       isUtc: true,
     );
+    startDt = DateTime.fromMillisecondsSinceEpoch(
+      widget.gpsdt * 1000,
+      isUtc: true,
+    ).add(const Duration(hours: 7));
     DateTime gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
     _selectedDate = DateTime(gpsdtWIB.year, gpsdtWIB.month, gpsdtWIB.day);
+    _endDt = _calculateEndDtEpoch();
 
     setMarkerIcons();
     fetchAllData();
     // _fetchGeofencesData();
+  }
+  int _calculateEndDtEpoch() {
+    DateTime endDt = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 23, 59, 0);
+    return endDt.millisecondsSinceEpoch ~/ 1000; 
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+  void _updateStartEpochCallback(int startEpoch) {
+    setState(() {
+      widget.gpsdt = startEpoch;
+    });
   }
 
   void _handleTabSelection() {
@@ -121,24 +115,12 @@ class _DetailsPageViewState extends State<DetailsPageView>
     });
   }
 
-  // // void _fetchGeofencesData() async {
-  //   try {
-  //     List<Geofences> geofencesList = await apiService.fetchGeofences();
-  //     setState(() {
-  //       _geofencesList = geofencesList;
-  //     });
-  //   } catch (e) {
-  //     print("Error fetching geofences: $e");
-  //   }
-  // }
-
   void fetchAllData() async {
     final int vehicleId = widget.vehicleId;
     final int startEpoch = widget.gpsdt;
 
     try {
-      final Data dataAll =
-          await apiService.fetchDailyHistory(vehicleId, startEpoch);
+      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
 
       setState(() {
         allData = [dataAll];
@@ -161,12 +143,9 @@ class _DetailsPageViewState extends State<DetailsPageView>
 
   Future<Uint8List> getBytesFromAsset(String path, int width) async {
     ByteData data = await rootBundle.load(path);
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
-        targetWidth: width);
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: width);
     ui.FrameInfo fi = await codec.getNextFrame();
-    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!
-        .buffer
-        .asUint8List();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List();
   }
 
   Set<Polyline> _createPolylines() {
@@ -186,7 +165,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
       width: 2,
     );
 
-    return Set.of([polyline]);
+    return {polyline};
   }
 
   Set<Marker> _createMarkers(double sliderValue) {
@@ -226,8 +205,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
           icon: BitmapDescriptor.defaultMarker,
           infoWindow: InfoWindow(
             title: "Stop ${index + 1}",
-            snippet:
-                "${DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(detail.startdt * 1000))} - ${DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(detail.enddt * 1000))}",
+            snippet:"${DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(detail.startdt * 1000))} - ${DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(detail.enddt * 1000))}",
           ),
         );
       }).toList();
@@ -238,26 +216,6 @@ class _DetailsPageViewState extends State<DetailsPageView>
     return markers;
   }
 
-  // Set<Polygon> _createGeofences() {
-  //   Set<Polygon> polygons = {};
-
-  //   for (Geofences geofence in _geofencesList) {
-  //     List<LatLng> points = geofence.geometry!
-  //         .map((geometry) => LatLng(geometry.latitude!, geometry.longitude!))
-  //         .toList();
-  //     Polygon polygon = Polygon(
-  //       polygonId: PolygonId(geofence.id.toString()),
-  //       points: points,
-  //       strokeWidth: 2,
-  //       strokeColor: Colors.orange,
-  //       fillColor: Colors.orange.withOpacity(0.2),
-  //     );
-
-  //     polygons.add(polygon);
-  //   }
-
-  //   return polygons;
-  // }
 
   void _updateMap() {
     setState(() {
@@ -275,8 +233,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
     if (index >= dailyData.length) index = dailyData.length - 1;
 
     final DataItem currentDaily = dailyData[index];
-    return DateFormat.Hm()
-        .format(DateTime.fromMillisecondsSinceEpoch(currentDaily.gpsdt * 1000));
+    return DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(currentDaily.gpsdt * 1000));
   }
 
   String _getSpeedForSliderValue(double sliderValue) {
@@ -304,11 +261,8 @@ class _DetailsPageViewState extends State<DetailsPageView>
   }
 
   bool _isForwardButtonEnabled() {
-    DateTime maxDate = DateTime.fromMillisecondsSinceEpoch(
-        widget.initialGpsdt * 1000,
-        isUtc: true);
-    DateTime selectedDateUtc = DateTime.utc(
-        _selectedDate.year, _selectedDate.month, _selectedDate.day);
+    DateTime maxDate = DateTime.fromMillisecondsSinceEpoch(widget.initialGpsdt * 1000, isUtc: true);
+    DateTime selectedDateUtc = DateTime.utc(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     return selectedDateUtc.isBefore(maxDate);
   }
 
@@ -317,9 +271,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
       return _initialCameraPosition;
     }
 
-    final List<LatLng> polylineCoordinates = dailyData
-        .map((daily) => LatLng(daily.latitude, daily.longitude))
-        .toList();
+    final List<LatLng> polylineCoordinates = dailyData.map((daily) => LatLng(daily.latitude, daily.longitude)).toList();
 
     double sumLat = 0.0;
     double sumLng = 0.0;
@@ -343,9 +295,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
       );
     }
 
-    final List<LatLng> polylineCoordinates = dailyData
-        .map((daily) => LatLng(daily.latitude, daily.longitude))
-        .toList();
+    final List<LatLng> polylineCoordinates = dailyData.map((daily) => LatLng(daily.latitude, daily.longitude)).toList();
 
     double minLat = polylineCoordinates[0].latitude;
     double maxLat = polylineCoordinates[0].latitude;
@@ -365,33 +315,6 @@ class _DetailsPageViewState extends State<DetailsPageView>
     );
   }
 
-  double _calculateZoomLevel(LatLngBounds bounds) {
-    const double padding = 50.0;
-    const double desiredWidth = 400.0;
-
-    double angle = bounds.northeast.longitude - bounds.southwest.longitude;
-    if (angle < 0) {
-      angle += 360;
-    }
-
-    double zoom = _getBoundsZoomLevel(bounds, padding, desiredWidth);
-    return zoom;
-  }
-
-  double _getBoundsZoomLevel(
-      LatLngBounds bounds, double padding, double width) {
-    double globeWidth = 256;
-    double west = bounds.southwest.longitude;
-    double east = bounds.northeast.longitude;
-    double angle = east - west;
-    if (angle < 0) {
-      angle += 360;
-    }
-
-    double zoom = ((width - padding) * 360) / (angle * globeWidth);
-    return zoom;
-  }
-
   bool _polylineOption = true;
   bool _stopMarkerOption = true;
 
@@ -399,7 +322,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
   Widget build(BuildContext context) {
     super.build(context);
     return DefaultTabController(
-      length: 4,
+      length: widget.type == 0 || widget.type == 12345 ? 5 : 4,
       initialIndex: _selectedTabIndex,
       child: Scaffold(
         appBar: AppBar(
@@ -473,20 +396,16 @@ class _DetailsPageViewState extends State<DetailsPageView>
             indicatorColor: Colors.white,
             indicatorSize: TabBarIndicatorSize.tab,
             indicatorWeight: 5.0,
-            tabs: const [
-              Tab(
-                icon: Icon(Icons.map, color: Colors.white),
-              ),
-              Tab(
-                icon: Icon(Icons.article, color: Colors.white),
-              ),
-              Tab(
-                icon: Icon(Icons.event, color: Colors.white),
-              ),
-              Tab(
-                icon: Icon(Icons.insert_chart, color: Colors.white),
-              ),
-            ],
+            tabs: [
+              const Tab(icon: Icon(Icons.map, color: Colors.white)),
+              const Tab(icon: Icon(Icons.article, color: Colors.white)),
+              const Tab(icon: Icon(Icons.event, color: Colors.white)),
+              const Tab(icon: Icon(Icons.insert_chart, color: Colors.white)),
+              if (widget.type == 0)
+                const Tab(icon: Icon(Icons.camera_alt, color: Colors.white)),
+              if (widget.type == 12345)
+                const Tab(icon: Icon(Icons.video_call, color: Colors.white)),
+              ],
           ),
         ),
         body: Column(
@@ -648,12 +567,6 @@ class _DetailsPageViewState extends State<DetailsPageView>
                           stopLatitude = lat;
                           stopLongitude = lon;
                           _tabController.animateTo(0);
-                          _isLoadingChangeStopMarker = true;
-                        });
-                        Future.delayed(const Duration(milliseconds: 1000), () {
-                          setState(() {
-                            _isLoadingChangeStopMarker = false;
-                          });
                         });
                       },
                       stopNumber: stopNumber,
@@ -662,6 +575,17 @@ class _DetailsPageViewState extends State<DetailsPageView>
                       eventData: inputData,
                     ),
                     _buildChartWidget(),
+                    if (widget.type == 0)
+                      DashcamWidget(
+                        vehicleId: widget.vehicleId,
+                        startDt: widget.gpsdt,
+                        endDt: _endDt,
+                        onUpdateStartEpoch: _updateStartEpoch,
+                      ),
+                    if (widget.type == 12345)
+                      DmsWidget(
+                        vehicleImei: widget.imei,
+                      ),
                   ],
                 ),
               ),
@@ -672,24 +596,17 @@ class _DetailsPageViewState extends State<DetailsPageView>
     );
   }
 
-  Widget _buildLoadingDialog() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
-  }
-
   Widget _buildMapWidget() {
-  if (_isLoadingChangeStopMarker) {
-    return _buildLoadingDialog();
-  } else if (dailyData.isEmpty || allData.isEmpty) {
+    
+  if (dailyData.isEmpty || allData.isEmpty) {
     return GoogleMap(
       mapType: MapType.normal,
       initialCameraPosition: const CameraPosition(
         target: LatLng(-6.966667, 110.416664),
         zoom: 16,
       ),
-      markers: {},
-      polylines: {},
+      markers: const {},
+      polylines: const {},
       onMapCreated: (controller) {},
     );
   } else {
@@ -715,12 +632,21 @@ class _DetailsPageViewState extends State<DetailsPageView>
                           setState(() {
                             _mapController = controller;
                           });
-
-                          if (stopLatitude == null && stopLongitude == null) {
+                          if (stopLatitude != null && stopLongitude != null) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              _mapController.animateCamera(
+                                CameraUpdate.newLatLngZoom(
+                                  LatLng(stopLatitude!, stopLongitude!),
+                                  14,
+                                ), animationDuration: const Duration(milliseconds: 2000)
+                              );
+                            });
+                          } else if (stopLatitude == null && stopLongitude == null) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
                               LatLngBounds bounds = _calculatePolylineBounds();
                               _mapController.animateCamera(
                                 CameraUpdate.newLatLngBounds(bounds, 50),
+                                animationDuration: const Duration(milliseconds: 2000)
                               );
                             });
                           }
@@ -777,10 +703,24 @@ class _DetailsPageViewState extends State<DetailsPageView>
 
   Widget _buildChartWidget() {
     if (dailyData.isEmpty) {
-      return const Center(
-        child: Text(
-          'No Data Available',
-          style: TextStyle(fontFamily: 'Poppins'),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/icons/no-event.png',
+              height: 100,
+              width: 100,
+            ),
+            const SizedBox(height: 10), 
+            const Text(
+              'No Data available',
+              style: TextStyle(
+                fontSize: 18,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1010,6 +950,7 @@ class _DetailsPageViewState extends State<DetailsPageView>
         _isLoading = true;
         stopLatitude = null;
         stopLongitude = null;
+        _endDt = _calculateEndDtEpoch();
       });
 
       final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
@@ -1100,10 +1041,6 @@ class _DetailsPageViewState extends State<DetailsPageView>
           _selectedDate = picked;
         });
         _updateStartEpoch();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Anda tidak dapat memilih tanggal yang cocok dengan tanggal data."),
-        ));
       }
     }
   }

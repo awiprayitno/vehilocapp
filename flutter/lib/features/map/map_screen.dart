@@ -8,34 +8,27 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
+import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:VehiLoc/core/utils/vehicle_func.dart';
 import 'dart:math';
 import 'package:VehiLoc/core/model/response_geofences.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:logger/logger.dart';
 
 class MapScreen extends StatefulWidget {
   double? lat;
   double? lon;
 
-  MapScreen({this.lat, this.lon});
+  MapScreen({super.key, this.lat, this.lon});
+  static Function? globalSetState;
 
-  @override
+  @override 
   _MapScreenState createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
-  final Logger logger = Logger(
-    printer: PrettyPrinter(
-        methodCount: 2,
-        errorMethodCount: 8,
-        lineLength: 120,
-        colors: true,
-        printEmojis: true,
-        printTime: true),
-  );
+class _MapScreenState extends State<MapScreen> with AutomaticKeepAliveClientMixin<MapScreen>{
+  @override
+  bool get wantKeepAlive => true;
   late BitmapDescriptor greenMarkerIcon;
   late BitmapDescriptor redMarkerIcon;
   late BitmapDescriptor greyMarkerIcon;
@@ -48,6 +41,9 @@ class _MapScreenState extends State<MapScreen> {
   bool geofencesEnabled = true;
   late GoogleMapController _googleMapController;
 
+  double? lat;
+  double? lon;
+
   @override
   void initState() {
     super.initState();
@@ -56,16 +52,27 @@ class _MapScreenState extends State<MapScreen> {
     _fetchDataAndGeofences = fetchAllData();
     _allVehicles = [];
     WebSocketProvider.subscribe(realtimeHandler);
+    lat = widget.lat;
+    lon = widget.lon;
+    MapScreen.globalSetState = (double? lat, double?lon){
+      setState(() {
+        this.lat = lat;
+        this.lon = lon;
+        _googleMapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat!, lon!), 16), animationDuration: const Duration(milliseconds: 2000));
+      });
+    };
   }
 
   void realtimeHandler(Vehicle vehicle) {
-    for (var current in _allVehicles) {
-      if (current.vehicleId == vehicle.vehicleId) {
-        setState(() {
-          current.merge(vehicle);
-          // logger.i('WebSocket message map: ${current.customerName} ${current.name}');
-        });
-        break;
+    if (vehicle.lat != 0.0 && vehicle.lon != 0.0) {
+      for (var current in _allVehicles) {
+        if (current.vehicleId == vehicle.vehicleId) {
+          setState(() {
+            current.merge(vehicle);
+            // logger.i('WebSocket message map: ${current.customerName} ${current.name}');
+          });
+          break;
+        }
       }
     }
   }
@@ -83,9 +90,9 @@ class _MapScreenState extends State<MapScreen> {
   Future<List<Vehicle>> fetchAllData() async {
     try {
       final List<Vehicle> vehicles = await apiService.fetchVehicles();
-      final List<Geofences> geofencesList = await apiService.fetchGeofences();
-      _fetchGeofences = Future.value(geofencesList);
-      return vehicles;
+      // Filter out vehicles with lat and lon equal to 0.0
+      final List<Vehicle> validVehicles = vehicles.where((vehicle) => vehicle.lat != 0.0 && vehicle.lon != 0.0).toList();
+      return validVehicles;
     } catch (e) {
       logger.e("Error fetching data: $e");
       return [];
@@ -141,8 +148,8 @@ class _MapScreenState extends State<MapScreen> {
 
   void _zoomOutMap() {
     _resetCameraPosition();
-    widget.lat = null;
-    widget.lon = null;
+    lat = null;
+    lon = null;
   }
 
   void _refreshNoData() {
@@ -154,13 +161,9 @@ class _MapScreenState extends State<MapScreen> {
 
 
 void _resetCameraPosition() {
-  LatLngBounds bounds;
-    bounds = _getBounds(_allVehicles);
-  
-  _googleMapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 20));
+  LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
+  _googleMapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000));
 }
-
-
 
   // Future<void> _checkLocationPermission() async {
   //   PermissionStatus status = await Permission.location.status;
@@ -173,6 +176,7 @@ void _resetCameraPosition() {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -301,15 +305,16 @@ void _resetCameraPosition() {
                   return GoogleMap(
                     mapType: MapType.normal,
                     initialCameraPosition: CameraPosition(
-                      target: widget.lat != null && widget.lon != null
-                          ? LatLng(widget.lat!, widget.lon!)
+                      target: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                          ? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
+                                   (_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
                           : center,
-                      zoom: widget.lat != null && widget.lon != null
-                          ? 15
+                      zoom: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                          ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
                           : zoomLevel,
                     ),
                     markers: Set<Marker>.from(
-                      _allVehicles.map((vehicle) {
+                      _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
                         BitmapDescriptor markerIcon;
                         DateTime? gpsdtWIB;
 
@@ -347,30 +352,31 @@ void _resetCameraPosition() {
                     zoomControlsEnabled: false,
                     onMapCreated: (GoogleMapController controller) {
                       _googleMapController = controller;
-                      if (!(widget.lat != null && widget.lon != null)) {
+                      if (_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)) {
                         Future.delayed(const Duration(milliseconds: 1000), () {
+                          LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
                           controller.animateCamera(
-                            CameraUpdate.newLatLngBounds(bounds, 20),
+                            CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000)
                           );
                         });
                       }
                     },
-
                   );
                 } else {
                   List<Geofences> geofences = geofenceSnapshot.data!;
                   return GoogleMap(
                     mapType: MapType.normal,
                     initialCameraPosition: CameraPosition(
-                      target: widget.lat != null && widget.lon != null
-                          ? LatLng(widget.lat!, widget.lon!)
+                      target: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                          ? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
+                                   (_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
                           : center,
-                      zoom: widget.lat != null && widget.lon != null
-                          ? 15
+                      zoom: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                          ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
                           : zoomLevel,
                     ),
                     markers: Set<Marker>.from(
-                      _allVehicles.map((vehicle) {
+                      _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
                         BitmapDescriptor markerIcon;
                         DateTime? gpsdtWIB;
 
@@ -397,7 +403,7 @@ void _resetCameraPosition() {
                           icon: markerIcon,
                           infoWindow: InfoWindow(
                             title: ("${vehicle.name}"),
-                            snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} "),
+                            snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
                           ),
                           rotation: vehicle.bearing?.toDouble() ?? 0.0,
                         );
@@ -409,10 +415,11 @@ void _resetCameraPosition() {
                     zoomControlsEnabled: false,
                     onMapCreated: (GoogleMapController controller) {
                       _googleMapController = controller;
-                      if (!(widget.lat != null && widget.lon != null)) {
+                      if (_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)) {
                         Future.delayed(const Duration(milliseconds: 1000), () {
+                          LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
                           controller.animateCamera(
-                            CameraUpdate.newLatLngBounds(bounds, 20),
+                            CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000)
                           );
                         });
                       }
@@ -428,7 +435,14 @@ void _resetCameraPosition() {
   }
 
   LatLngBounds _getBounds(List<Vehicle> vehicles) {
-    List<LatLng> positions = vehicles.map((vehicle) => LatLng(vehicle.lat!, vehicle.lon!)).toList();
+    List<LatLng> positions = vehicles.map((vehicle) {
+      if (vehicle.lat != null && vehicle.lon != null) {
+        return LatLng(vehicle.lat!, vehicle.lon!);
+      } else {
+        return const LatLng(0, 0);
+      }
+    }).toList();
+
     double minLat = positions.map((pos) => pos.latitude).reduce(min);
     double minLon = positions.map((pos) => pos.longitude).reduce(min);
     double maxLat = positions.map((pos) => pos.latitude).reduce(max);

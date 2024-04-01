@@ -30,7 +30,6 @@ class _AccountViewState extends State<AccountView> {
     setState(() {
       version = packageInfo.version;
       buildNumber = packageInfo.buildNumber;
-      print("uhaushuasu $version+$buildNumber" );
     });
   }
 

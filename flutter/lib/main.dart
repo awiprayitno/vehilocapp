@@ -1,6 +1,6 @@
+import 'package:VehiLoc/check_token.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:VehiLoc/features/auth/login/login_view.dart';
 
 void main() {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +16,7 @@ class App extends StatelessWidget {
     FlutterNativeSplash.remove();
     
     return const MaterialApp(
-      home: LoginView(),
+      home: CheckToken(),
     );
   }
 }

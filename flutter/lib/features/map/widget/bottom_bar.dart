@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:VehiLoc/features/map/map_screen.dart';
 import 'package:VehiLoc/features/account/account_view.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
+import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:VehiLoc/features/vehicles/vehicles_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 
@@ -11,15 +12,15 @@ class BottomBar extends StatefulWidget {
   final double? lat;
   final double? lon;
 
-  BottomBar({this.lat, this.lon});
+  const BottomBar({Key? key, this.lat, this.lon}) : super(key: key);
+  static int currentIndex = 0;
+  static Function? globalSetState;
 
   @override
   _BottomBarState createState() => _BottomBarState();
 }
 
 class _BottomBarState extends State<BottomBar> {
-  int currentIndex = 0;
-
   late PersistentTabController _controller = PersistentTabController();
 
   late List<Widget> _navScreens;
@@ -27,22 +28,35 @@ class _BottomBarState extends State<BottomBar> {
   @override
   void initState() {
     super.initState();
-    _controller = PersistentTabController(initialIndex: currentIndex);
+    _controller = PersistentTabController(initialIndex: BottomBar.currentIndex);
+    var mapScreen = MapScreen(lat: widget.lat, lon: widget.lon);
+
     _navScreens = [
-      MapScreen(lat: widget.lat, lon: widget.lon),
+      mapScreen,
       const VehicleView(),
       const AccountView(),
     ];
+
+    BottomBar.globalSetState = (double? lat, double? lon) {
+      setState(() {
+        BottomBar.currentIndex = 0;
+        _controller.index = 0;
+        MapScreen.globalSetState?.call(lat, lon);
+      });
+    };
   }
 
   List<PersistentBottomNavBarItem> _navBarsItems() {
     return [
       PersistentBottomNavBarItem(
-        icon: SvgPicture.asset(
-          'assets/icons/map-icon.svg',
-          color: currentIndex == 0
-              ? GlobalColor.buttonColor
-              : GlobalColor.textColor,
+        icon: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            BottomBar.currentIndex == 0 ? GlobalColor.buttonColor : GlobalColor.textColor,
+            BlendMode.srcIn,
+          ),
+          child: SvgPicture.asset(
+            'assets/icons/map-icon.svg',
+          ),
         ),
         title: 'Map',
         activeColorPrimary: GlobalColor.textColor,
@@ -50,15 +64,18 @@ class _BottomBarState extends State<BottomBar> {
         inactiveColorPrimary: GlobalColor.buttonColor,
         textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.bold,
-          color: currentIndex == 0 ? GlobalColor.textColor : GlobalColor.textColor,
+          color: BottomBar.currentIndex == 0 ? GlobalColor.textColor : GlobalColor.textColor,
         ),
       ),
       PersistentBottomNavBarItem(
-        icon: SvgPicture.asset(
-          'assets/icons/car-icon.svg',
-          color: currentIndex == 1
-              ? GlobalColor.buttonColor
-              : GlobalColor.textColor,
+        icon: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            BottomBar.currentIndex == 1 ? GlobalColor.buttonColor : GlobalColor.textColor,
+            BlendMode.srcIn,
+          ),
+          child: SvgPicture.asset(
+            'assets/icons/car-icon.svg',
+          ),
         ),
         title: 'Vehicles',
         activeColorPrimary: GlobalColor.textColor,
@@ -66,15 +83,18 @@ class _BottomBarState extends State<BottomBar> {
         inactiveColorPrimary: GlobalColor.buttonColor,
         textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.bold,
-          color: currentIndex == 1 ? GlobalColor.textColor : GlobalColor.textColor,
+          color: BottomBar.currentIndex == 1 ? GlobalColor.textColor : GlobalColor.textColor,
         ),
       ),
       PersistentBottomNavBarItem(
-        icon: SvgPicture.asset(
-          'assets/icons/profile-icon.svg',
-          color: currentIndex == 2
-              ? GlobalColor.buttonColor
-              : GlobalColor.textColor,
+        icon: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            BottomBar.currentIndex == 2 ? GlobalColor.buttonColor : GlobalColor.textColor,
+            BlendMode.srcIn,
+          ),
+          child: SvgPicture.asset(
+            'assets/icons/profile-icon.svg',
+          ),
         ),
         title: 'Profile',
         activeColorPrimary: GlobalColor.textColor,
@@ -82,7 +102,7 @@ class _BottomBarState extends State<BottomBar> {
         inactiveColorPrimary: GlobalColor.buttonColor,
         textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.bold,
-          color: currentIndex == 2 ? GlobalColor.textColor : GlobalColor.textColor,
+          color: BottomBar.currentIndex == 2 ? GlobalColor.textColor : GlobalColor.textColor,
         ),
       ),
     ];
@@ -105,7 +125,7 @@ class _BottomBarState extends State<BottomBar> {
       navBarStyle: NavBarStyle.style10,
       onItemSelected: (index) {
         setState(() {
-          currentIndex = index;
+          BottomBar.currentIndex = index;
         });
       },
     );
