@@ -17,6 +17,7 @@ dependencies:
   flutter_svg: ^2.0.9 # to handle svg
   google_fonts: ^6.1.0 # to use font google
   hexcolor: ^3.0.1 # to use color without 0xff
+  geolocator: ^11.0.0
   google_maps_flutter:
     git:
       url: https://github.com/RideMyPark/flutter_packages.git
@@ -44,6 +45,7 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/logo/vehiloc-logo-bg.png"
   min_sdk_android: 21
+
 
 flutter_native_splash:
   android: true

@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -102,11 +105,93 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  Future<void> _requestLocationPermission() async {
-    PermissionStatus status = await Permission.location.request();
-    if (!status.isGranted) {
-      logger.e("permission success");
-    }
+  Future<void> _requestLocationPermission(BuildContext context) async {
+    await Permission.location.serviceStatus.isEnabled.then((value) async {
+      logger.i("permission");
+      logger.wtf(value);
+      if(value){
+        await Permission.location.isGranted.then((va) async {
+          if(!va){
+            await Permission.location.isPermanentlyDenied.then((v){
+              logger.i("location Permanent disable");
+              logger.wtf(v);
+              if(v){
+
+                showDialog(
+                    barrierDismissible: false,
+                    context: context, builder: (BuildContext c){
+                  return AlertDialog(
+
+                    title: const Text(
+                        "Alert"
+                    ),
+                    content: Container(
+                      child: const Text("Silahkan buka pengaturan untuk memberikan akses lokasi ke Vehiloc"),
+                    ),
+                    actions: [
+                      ElevatedButton(onPressed: (){
+                        Geolocator.openLocationSettings().then((value) {
+                          exit(0);
+                        });
+
+
+                      }, child: const Text("Ok")),
+                    ],
+                  );
+                });
+              }else{
+                showDialog(
+                    barrierDismissible: false,
+                    context: context, builder: (BuildContext c){
+                  return AlertDialog(
+                    title: const Text(
+                        "Allow your location "
+                    ),
+                    content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
+                    actions: [
+                      ElevatedButton(onPressed: (){
+                        exit(0);
+                      }, child: const Text("Batal")),
+                      ElevatedButton(onPressed: ()async {
+                        Navigator.pop(context);
+                        PermissionStatus status = await Permission.location.request();
+                        if (!status.isGranted) {
+                          exit(0);
+                        }
+                      }, child: const Text("Ya")),
+                    ],
+                  );
+                });
+              }
+            });
+
+          }
+
+        });
+      }else{
+        showDialog(
+            barrierDismissible: false,
+            context: context, builder: (BuildContext c){
+          return AlertDialog(
+
+            title: const Text(
+                "Alert"
+            ),
+            content: const Text("Silahkan menyalakan lokasi untuk mengakses Vehiloc"),
+            actions: [
+              ElevatedButton(onPressed: (){
+                Geolocator.openLocationSettings().then((value) {
+                  exit(0);
+                });
+
+
+              }, child: const Text("Ok")),
+            ],
+          );
+        });
+      }
+    });
+
   }
 
 
@@ -139,7 +224,7 @@ class _LoginViewState extends State<LoginView> {
         prefs.setString('password', password);
 
         await _fetchAndCacheCustomerSalts();
-        await _requestLocationPermission();
+        await _requestLocationPermission(context);
 
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const BottomBar()),
