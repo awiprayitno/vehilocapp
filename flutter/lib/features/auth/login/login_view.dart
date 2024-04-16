@@ -109,15 +109,15 @@ class _LoginViewState extends State<LoginView> {
     await Permission.location.serviceStatus.isEnabled.then((value) async {
       logger.i("permission");
       logger.wtf(value);
-      if(value){
+      if(value == true){
         await Permission.location.isGranted.then((va) async {
           if(!va){
-            await Permission.location.isPermanentlyDenied.then((v){
+            await Permission.location.isPermanentlyDenied.then((v) async {
               logger.i("location Permanent disable");
               logger.wtf(v);
               if(v){
 
-                showDialog(
+                await showDialog(
                     barrierDismissible: false,
                     context: context, builder: (BuildContext c){
                   return AlertDialog(
@@ -140,7 +140,7 @@ class _LoginViewState extends State<LoginView> {
                   );
                 });
               }else{
-                showDialog(
+                await showDialog(
                     barrierDismissible: false,
                     context: context, builder: (BuildContext c){
                   return AlertDialog(
@@ -151,14 +151,14 @@ class _LoginViewState extends State<LoginView> {
                     actions: [
                       ElevatedButton(onPressed: (){
                         exit(0);
-                      }, child: const Text("Batal")),
+                      }, child: const Text("Cancel")),
                       ElevatedButton(onPressed: ()async {
                         Navigator.pop(context);
                         PermissionStatus status = await Permission.location.request();
                         if (!status.isGranted) {
                           exit(0);
                         }
-                      }, child: const Text("Ya")),
+                      }, child: const Text("Yes")),
                     ],
                   );
                 });
@@ -169,7 +169,7 @@ class _LoginViewState extends State<LoginView> {
 
         });
       }else{
-        showDialog(
+        await showDialog(
             barrierDismissible: false,
             context: context, builder: (BuildContext c){
           return AlertDialog(

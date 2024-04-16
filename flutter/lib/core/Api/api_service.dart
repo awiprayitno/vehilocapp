@@ -36,6 +36,11 @@ class ApiService {
         headers: {'Authorization': basicAuth},
       );
 
+      logger.i("response fetch vehicle");
+      logger.i(response.body);
+      logger.i(username);
+      logger.i(password);
+
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = json.decode(response.body);
         final List<Vehicle> vehicles = jsonResponse

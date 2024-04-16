@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:VehiLoc/features/auth/login/login_view.dart';
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -13,17 +16,99 @@ class CheckToken extends StatefulWidget {
 }
 
 class _CheckTokenState extends State<CheckToken> {
-  Future<void> _requestLocationPermission() async {
-    PermissionStatus status = await Permission.location.request();
-    if (!status.isGranted) {
-      logger.e("permission success");
-    }
+  Future<void> _requestLocationPermission(BuildContext context) async {
+    await Permission.location.serviceStatus.isEnabled.then((value) async {
+      logger.i("permission");
+      logger.wtf(value);
+      if(value == true){
+        await Permission.location.isGranted.then((va) async {
+          if(!va){
+            await Permission.location.isPermanentlyDenied.then((v) async {
+              logger.i("location Permanent disable");
+              logger.wtf(v);
+              if(v){
+
+                await showDialog(
+                    barrierDismissible: false,
+                    context: context, builder: (BuildContext c){
+                  return AlertDialog(
+
+                    title: const Text(
+                        "Alert"
+                    ),
+                    content: Container(
+                      child: const Text("Silahkan buka pengaturan untuk memberikan akses lokasi ke Vehiloc"),
+                    ),
+                    actions: [
+                      ElevatedButton(onPressed: (){
+                        Geolocator.openLocationSettings().then((value) {
+                          exit(0);
+                        });
+
+
+                      }, child: const Text("Ok")),
+                    ],
+                  );
+                });
+              }else{
+                await showDialog(
+                    barrierDismissible: false,
+                    context: context, builder: (BuildContext c){
+                  return AlertDialog(
+                    title: const Text(
+                        "Allow your location "
+                    ),
+                    content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
+                    actions: [
+                      ElevatedButton(onPressed: (){
+                        exit(0);
+                      }, child: const Text("Cancel")),
+                      ElevatedButton(onPressed: ()async {
+                        Navigator.pop(context);
+                        PermissionStatus status = await Permission.location.request();
+                        if (!status.isGranted) {
+                          exit(0);
+                        }
+                      }, child: const Text("Yes")),
+                    ],
+                  );
+                });
+              }
+            });
+
+          }
+
+        });
+      }else{
+        await showDialog(
+            barrierDismissible: false,
+            context: context, builder: (BuildContext c){
+          return AlertDialog(
+
+            title: const Text(
+                "Alert"
+            ),
+            content: const Text("Silahkan menyalakan lokasi untuk mengakses Vehiloc"),
+            actions: [
+              ElevatedButton(onPressed: (){
+                Geolocator.openLocationSettings().then((value) {
+                  exit(0);
+                });
+
+
+              }, child: const Text("Ok")),
+            ],
+          );
+        });
+      }
+    });
+
   }
   
   Future<void> _checkTokenAndRedirect() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
-    await _requestLocationPermission();
+    await _requestLocationPermission(context);
 
     if (token != null && token.isNotEmpty) {
       Navigator.of(context).pushAndRemoveUntil(
