@@ -58,7 +58,8 @@ class WebSocketProvider {
           var vehicleRaw = json.decode(event);
           Vehicle vehicle = Vehicle.fromJson(vehicleRaw);
           sub(vehicle);
-        } catch (e) {
+        } catch (e, t) {
+          logger.w(t);
           logger.e("Subscriber error: $e");
         }
       }

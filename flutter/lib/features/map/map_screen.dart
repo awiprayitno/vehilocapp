@@ -341,7 +341,8 @@ void _resetCameraPosition() {
                           icon: markerIcon,
                           infoWindow: InfoWindow(
                             title: ("${vehicle.name}"),
-                            snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
+                            snippet: ""
+                            //("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
                           ),
                           rotation: vehicle.bearing?.toDouble() ?? 0.0,
                         );

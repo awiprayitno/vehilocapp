@@ -53,8 +53,9 @@ class ApiService {
         logger.e("API request failed with status code: ${response.statusCode}");
         return [];
       }
-    } catch (e) {
+    } catch (e, t) {
       logger.e("Error during API request: $e");
+      logger.w(t);
       return [];
     }
   }

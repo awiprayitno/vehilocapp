@@ -35,13 +35,13 @@ class Vehicle {
     name = json['name'];
     plateNo = json['plate_no'];
     gpsdt = json['gpsdt'];
-    speed = json['speed'];
+    speed = (json['speed'] is int) ? json["speed"] : int.tryParse(json["speed"] ?? "0");
     lat = json['lat'];
     lon = json['lon'];
     vehicleId = json['vehicle_id'];
     type = json['type'];
-    baseMcc = json['base_mcc'];
-    bearing = json['bearing'];
+    baseMcc = json['base_mcc'] ?? 0;
+    bearing = (json['bearing'] is int) ? json['bearing'] : int.tryParse(json["bearing"] ?? "0");
     imei = json['imei'];
     if (json['sensors'] != null) {
       sensors = <Sensor>[];
