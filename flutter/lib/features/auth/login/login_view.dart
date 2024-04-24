@@ -144,21 +144,21 @@ class _LoginViewState extends State<LoginView> {
                     barrierDismissible: false,
                     context: context, builder: (BuildContext c){
                   return AlertDialog(
-                    title: const Text(
-                        "Allow your location "
-                    ),
+                    // title: const Text(
+                    //     "Allow your location "
+                    // ),
                     content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
                     actions: [
-                      ElevatedButton(onPressed: (){
-                        exit(0);
-                      }, child: const Text("Cancel")),
+                      // ElevatedButton(onPressed: (){
+                      //   exit(0);
+                      // }, child: const Text("Cancel")),
                       ElevatedButton(onPressed: ()async {
                         Navigator.pop(context);
                         PermissionStatus status = await Permission.location.request();
                         if (!status.isGranted) {
                           exit(0);
                         }
-                      }, child: const Text("Yes")),
+                      }, child: const Text("Continue")),
                     ],
                   );
                 });

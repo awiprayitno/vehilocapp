@@ -33,7 +33,7 @@
 	<key>NSLocationUsageDescription</key>
 	<string>Older devices need location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Need location when in use</string>
+	<string>We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app need permission to save image.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
