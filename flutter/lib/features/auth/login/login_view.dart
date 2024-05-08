@@ -144,7 +144,7 @@ class _LoginViewState extends State<LoginView> {
                     barrierDismissible: false,
                     context: context, builder: (BuildContext c){
                   return AlertDialog(
-                    // title: const Text(
+                    // title: const Text(hf
                     //     "Allow your location "
                     // ),
                     content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
@@ -280,16 +280,20 @@ class _LoginViewState extends State<LoginView> {
                 //       ),
                 //     ),
                 // ),
-                TextFormLogin(
-                  controller: _usernameController,
-                  text: 'Username',
-                  textInputType: TextInputType.text,
-                  obscure: false,
-                ),
+
+                 TextFormLogin(
+                   text: "Username",
+                    controller: _usernameController,
+                   obscure: false,
+                   clearButton: true,
+                  ),
+
+
                 const SizedBox(
                   height: 10,
                 ),
                 TextFormLogin(
+                  clearButton: false,
                   controller: _passwordController,
                   text: 'Password',
                   textInputType: TextInputType.text,

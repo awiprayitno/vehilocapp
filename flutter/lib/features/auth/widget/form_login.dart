@@ -8,12 +8,14 @@ class TextFormLogin extends StatefulWidget {
     required this.text,
     this.textInputType,
     required this.obscure,
+    required this.clearButton,
   }) : super(key: key);
 
   final TextEditingController controller;
   final String text;
   final TextInputType? textInputType;
   final bool obscure;
+  final bool clearButton;
 
   @override
   _TextFormLoginState createState() => _TextFormLoginState();
@@ -58,7 +60,14 @@ class _TextFormLoginState extends State<TextFormLogin> {
                     });
                   },
                 )
-              : null,
+              : widget.clearButton
+              ? IconButton(
+            icon: const Icon(Icons.cancel, size: 20,),
+            onPressed: () {
+              widget.controller.clear();
+            },
+          ):
+              null,
         ),
       ),
     );
