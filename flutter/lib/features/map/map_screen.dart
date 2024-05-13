@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:VehiLoc/core/Api/websocket.dart';
+import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
@@ -15,7 +17,7 @@ import 'package:VehiLoc/core/model/response_geofences.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:flutter/cupertino.dart';
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   double? lat;
   double? lon;
 
@@ -26,7 +28,7 @@ class MapScreen extends StatefulWidget {
   _MapScreenState createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> with AutomaticKeepAliveClientMixin<MapScreen>{
+class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveClientMixin<MapScreen>{
   @override
   bool get wantKeepAlive => true;
   late BitmapDescriptor greenMarkerIcon;
@@ -46,6 +48,7 @@ class _MapScreenState extends State<MapScreen> with AutomaticKeepAliveClientMixi
 
   @override
   void initState() {
+    logger.i("init state");
     super.initState();
     setMarkerIcons();
     _fetchGeofences = fetchGeofencesData();
@@ -88,6 +91,7 @@ class _MapScreenState extends State<MapScreen> with AutomaticKeepAliveClientMixi
   }
 
   Future<List<Vehicle>> fetchAllData() async {
+
     try {
       final List<Vehicle> vehicles = await apiService.fetchVehicles();
       // Filter out vehicles with lat and lon equal to 0.0
@@ -381,6 +385,7 @@ void _resetCameraPosition() {
                         BitmapDescriptor markerIcon;
                         DateTime? gpsdtWIB;
 
+                        //List? selectedCustomer = ref.watch(selectedCustomerProvider.notifier).state.customer;
                         if (vehicle.speed == 0) {
                           markerIcon = redMarkerIcon;
                         } else {

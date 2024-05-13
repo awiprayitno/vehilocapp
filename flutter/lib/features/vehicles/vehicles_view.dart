@@ -1,6 +1,8 @@
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
+import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
@@ -13,14 +15,14 @@ import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:VehiLoc/core/Api/websocket.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
 
-class VehicleView extends StatefulWidget {
+class VehicleView extends ConsumerStatefulWidget {
   const VehicleView({Key? key}) : super(key: key);
 
   @override
   _VehicleViewState createState() => _VehicleViewState();
 }
 
-class _VehicleViewState extends State<VehicleView> with AutomaticKeepAliveClientMixin<VehicleView>{
+class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAliveClientMixin<VehicleView>{
   @override
   bool get wantKeepAlive => true;
   final ApiService apiService = ApiService();
@@ -164,8 +166,9 @@ class _VehicleViewState extends State<VehicleView> with AutomaticKeepAliveClient
       _filteredVehicles = _allVehicles.where((vehicle) {
         final nameLower = vehicle.name?.toLowerCase() ?? '';
         final plateNoLower = vehicle.plateNo?.toLowerCase() ?? '';
+        final customerNameLower = vehicle.customerName?.toLowerCase() ?? "";
         final searchLower = query.toLowerCase();
-        return nameLower.contains(searchLower) || plateNoLower.contains(searchLower);
+        return nameLower.contains(searchLower) || plateNoLower.contains(searchLower) || customerNameLower.contains(searchLower);
       }).toList();
       _groupVehicles(_filteredVehicles);
     });
@@ -249,6 +252,19 @@ class _VehicleViewState extends State<VehicleView> with AutomaticKeepAliveClient
                   children: [
                     ExpansionTile(
                       onExpansionChanged: (onExpand){
+
+                        //logger.i(_groupedVehicles.keys.elementAt(index));
+                        if(onExpand){
+                          ref.read(selectedCustomerProvider.notifier).state.addSelectedCustomer({
+                            "customer_name" : customerName
+                          });
+                        }else{
+                          ref.read(selectedCustomerProvider.notifier).state.removSelectedCustomer({
+                            "customer_name" : customerName
+                          });
+                        }
+                        logger.i("selected customer");
+                        logger.i(ref.watch(selectedCustomerProvider.notifier).state.customer);
                         logger.i(customerName);
                         logger.i(onExpand);
                       },
