@@ -1,4 +1,7 @@
+import 'package:VehiLoc/features/maintenance/fuel_service_view.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:VehiLoc/features/map/map_screen.dart';
@@ -34,6 +37,7 @@ class _BottomBarState extends State<BottomBar> {
     _navScreens = [
       mapScreen,
       const VehicleView(),
+      const FuelServiceView(),
       const AccountView(),
     ];
 
@@ -92,6 +96,23 @@ class _BottomBarState extends State<BottomBar> {
             BottomBar.currentIndex == 2 ? GlobalColor.buttonColor : GlobalColor.textColor,
             BlendMode.srcIn,
           ),
+          child: const FaIcon(FontAwesomeIcons.screwdriverWrench, size: 18,),
+        ),
+        title: 'Maintenance',
+        activeColorPrimary: GlobalColor.textColor,
+        activeColorSecondary: GlobalColor.buttonColor,
+        inactiveColorPrimary: GlobalColor.buttonColor,
+        textStyle: GoogleFonts.poppins(
+          fontWeight: FontWeight.bold,
+          color: BottomBar.currentIndex == 2 ? GlobalColor.textColor : GlobalColor.textColor,
+        ),
+      ),
+      PersistentBottomNavBarItem(
+        icon: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            BottomBar.currentIndex == 3 ? GlobalColor.buttonColor : GlobalColor.textColor,
+            BlendMode.srcIn,
+          ),
           child: SvgPicture.asset(
             'assets/icons/profile-icon.svg',
           ),
@@ -102,7 +123,7 @@ class _BottomBarState extends State<BottomBar> {
         inactiveColorPrimary: GlobalColor.buttonColor,
         textStyle: GoogleFonts.poppins(
           fontWeight: FontWeight.bold,
-          color: BottomBar.currentIndex == 2 ? GlobalColor.textColor : GlobalColor.textColor,
+          color: BottomBar.currentIndex == 3 ? GlobalColor.textColor : GlobalColor.textColor,
         ),
       ),
     ];

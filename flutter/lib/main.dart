@@ -1,4 +1,5 @@
 import 'package:VehiLoc/check_token.dart';
+import 'package:VehiLoc/features/maintenance/widget/add_edit_fuel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,8 +18,13 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     FlutterNativeSplash.remove();
     
-    return const MaterialApp(
-      home: CheckToken(),
+    return MaterialApp(
+      //home: CheckToken(),
+      initialRoute: "/",
+      routes: {
+        '/': (context) => const CheckToken(),
+
+      },
     );
   }
 }
