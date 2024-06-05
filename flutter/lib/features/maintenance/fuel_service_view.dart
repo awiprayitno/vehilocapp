@@ -1,5 +1,6 @@
 
 import 'package:VehiLoc/features/maintenance/fuel_view.dart';
+import 'package:VehiLoc/features/maintenance/service_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,7 +39,7 @@ class _FuelServiceViewState extends ConsumerState<FuelServiceView> with Automati
       home: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          title: Text("Maintenance", style: TextStyle(
+          title: const Text("Maintenance", style: TextStyle(
             color: Colors.white
           ),),
           backgroundColor: GlobalColor.mainColor,
@@ -58,7 +59,7 @@ class _FuelServiceViewState extends ConsumerState<FuelServiceView> with Automati
               Expanded(
                   child: TabBarView(children: <Widget>[
                     FuelView(),
-                    Text("2")
+                    ServiceView()
 
 
 

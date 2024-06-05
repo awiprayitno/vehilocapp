@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:VehiLoc/core/model/dashcamtype2.dart';
 import 'package:VehiLoc/core/model/picture.dart';
 import 'package:VehiLoc/core/model/vehicle_picture.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:VehiLoc/core/model/response_daily.dart';
@@ -12,7 +14,9 @@ import 'package:VehiLoc/core/model/dashcamtype1.dart';
 
 class ApiService {
   final String baseUrl = "https://vehiloc.net/rest/";
+  final String baseApiUrl = "https://vehiloc.net/api";
   final String baseUrlDashcam = "https://dev.vehiloc.net/api/v1.0/live_stream";
+  int timeoutDuration = 20000;
 
   Future<List<Vehicle>> fetchVehicles() async {
     final String apiUrl = "$baseUrl/vehicles";
@@ -260,4 +264,46 @@ class ApiService {
       throw Exception('Error during API request: $e');
     }
   }
+
+  Future<String> addFuelData({
+    required Map data}) async {
+    final String apiUrl = "$baseApiUrl/v1.0/edit_fuel";
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.post(
+        Uri.parse(
+          apiUrl,
+        ),
+        body: data.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&'),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+          HttpHeaders.contentTypeHeader: "application/x-www-form-urlencoded"
+        },
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response add fuel");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      logger.e('ERROR add fuel: $e');
+      return 'ERROR add fuel';
+    }
+
+  }
+
 }
