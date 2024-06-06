@@ -180,7 +180,71 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   controller: durationController,
                   decoration: InputDecoration(
                     isDense: true,
-                    labelText: "Duration (days))",
+                    labelText: "Duration (days)",
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),),
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: TextField(
+                  onTap: () async{
+                    await showOmniDateTimePicker(
+                      type: OmniDateTimePickerType.date,
+                      is24HourMode: true,
+                      //initialDate: selectedDt,
+                      context: context,
+                    ).then((value){
+                      // selectedDt = value!;
+                      nextServiceDateController.text = DateFormat("yyyy-MM-dd HH:mm").format(value!);
+                    });
+                  },
+                  controller: nextServiceDateController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: "Next Service Date",
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),),
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: TextField(
+                  controller: nextServiceKmController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: "Next Service KM",
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),),
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: TextField(
+                  controller: sparepartCostController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: "Spare part Cost",
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),),
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                child: TextField(
+                  controller: serviceCostController,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    labelText: "Service Cost",
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
                     ),

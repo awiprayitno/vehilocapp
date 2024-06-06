@@ -305,5 +305,45 @@ class ApiService {
     }
 
   }
+  Future<String> addServiceData({
+    required Map data}) async {
+    final String apiUrl = "$baseApiUrl/v1.0/edit_service";
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.post(
+        Uri.parse(
+          apiUrl,
+        ),
+        body: data.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&'),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+          HttpHeaders.contentTypeHeader: "application/x-www-form-urlencoded"
+        },
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response add service");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      logger.e('ERROR add service: $e');
+      return 'ERROR add servicel';
+    }
+
+  }
 
 }
