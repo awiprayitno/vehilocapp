@@ -178,6 +178,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 margin: const EdgeInsets.only(top: 10),
                 child: TextField(
                   controller: durationController,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     isDense: true,
                     labelText: "Duration (days)",
@@ -216,6 +217,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 margin: const EdgeInsets.only(top: 10),
                 child: TextField(
                   controller: nextServiceKmController,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     isDense: true,
                     labelText: "Next Service KM",
@@ -229,6 +231,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 margin: const EdgeInsets.only(top: 10),
                 child: TextField(
                   controller: sparepartCostController,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     isDense: true,
                     labelText: "Spare part Cost",
@@ -242,6 +245,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 margin: const EdgeInsets.only(top: 10),
                 child: TextField(
                   controller: serviceCostController,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     isDense: true,
                     labelText: "Service Cost",
@@ -281,16 +285,25 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
               }else {
                 Map dataTemp = {};
                 dataTemp = {
-                  "fuel_id": "",
-                  "vehicle_id": vehicleId,
-                  "date": dateTimeController.text,
+                  "service_id" : "",
+                  "vehicle_id" : vehicleId,
+                  "date" : dateTimeController.text,
+                  "next_service_date" : nextServiceDateController.text,
+                  "duration" : durationController.text,
+                  "workshop" : workshopController.text,
+                  "title" : titleController.text,
+                  "sparepart_cost" : sparepartCostController.text,
+                  "service_cost" : serviceCostController.text,
+                  "description" : notesController.text
                 };
-                apiService.addFuelData(data: dataTemp).then((value) {
-                  logger.i(value);
-                  if (jsonDecode(value)["status"] == "SUCCESS") {
-                    Navigator.of(context).pop(true);
-                  }
-                });
+                logger.i("data temp");
+                logger.d(dataTemp);
+                // apiService.addServiceData(data: dataTemp).then((value) {
+                //   logger.i(value);
+                //   if (jsonDecode(value)["status"] == "SUCCESS") {
+                //     Navigator.of(context).pop(true);
+                //   }
+                // });
               }
             }, child: const Text("Save", style: TextStyle(
                 color: Colors.white
@@ -318,7 +331,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   "date" : dateTimeController.text,
 
                 };
-                apiService.addFuelData(data: dataTemp).then((value){
+                apiService.addServiceData(data: dataTemp).then((value){
                   logger.i(value);
                   if(jsonDecode(value)["status"] == "SUCCESS"){
 
