@@ -63,7 +63,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
         iconTheme: const IconThemeData(
             color: Colors.white
         ),
-        title: const Text("Add/Edit Fuel", style: TextStyle(
+        title: const Text("Add/Edit Service", style: TextStyle(
             color: Colors.white
         ),),
         backgroundColor: GlobalColor.mainColor,
@@ -101,12 +101,13 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 child: TextField(
                   onTap: () async{
                     await showOmniDateTimePicker(
+                      type: OmniDateTimePickerType.date,
                       is24HourMode: true,
                       initialDate: selectedDt,
                       context: context,
                     ).then((value){
                       selectedDt = value!;
-                      dateTimeController.text = DateFormat("yyyy-MM-dd HH:mm").format(value);
+                      dateTimeController.text = DateFormat("yyyy-MM-dd").format(value);
                     });
                   },
                   controller: dateTimeController,
@@ -199,7 +200,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                       context: context,
                     ).then((value){
                       // selectedDt = value!;
-                      nextServiceDateController.text = DateFormat("yyyy-MM-dd HH:mm").format(value!);
+                      nextServiceDateController.text = DateFormat("yyyy-MM-dd").format(value!);
                     });
                   },
                   controller: nextServiceDateController,
@@ -288,6 +289,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   "service_id" : "",
                   "vehicle_id" : vehicleId,
                   "date" : dateTimeController.text,
+                  "km" : kmController.text,
                   "next_service_date" : nextServiceDateController.text,
                   "duration" : durationController.text,
                   "workshop" : workshopController.text,
@@ -298,12 +300,12 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 };
                 logger.i("data temp");
                 logger.d(dataTemp);
-                // apiService.addServiceData(data: dataTemp).then((value) {
-                //   logger.i(value);
-                //   if (jsonDecode(value)["status"] == "SUCCESS") {
-                //     Navigator.of(context).pop(true);
-                //   }
-                // });
+                apiService.addServiceData(data: dataTemp).then((value) {
+                  logger.i(value);
+                  if (jsonDecode(value)["status"] == "SUCCESS") {
+                    Navigator.of(context).pop(true);
+                  }
+                });
               }
             }, child: const Text("Save", style: TextStyle(
                 color: Colors.white
@@ -326,10 +328,17 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
               }else{
                 Map dataTemp = {};
                 dataTemp = {
-                  "fuel_id" : "",
+                  "service_id" : "",
                   "vehicle_id" : vehicleId,
                   "date" : dateTimeController.text,
-
+                  "km" : kmController.text,
+                  "next_service_date" : nextServiceDateController.text,
+                  "duration" : durationController.text,
+                  "workshop" : workshopController.text,
+                  "title" : titleController.text,
+                  "sparepart_cost" : sparepartCostController.text,
+                  "service_cost" : serviceCostController.text,
+                  "description" : notesController.text
                 };
                 apiService.addServiceData(data: dataTemp).then((value){
                   logger.i(value);
