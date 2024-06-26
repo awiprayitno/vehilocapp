@@ -58,7 +58,7 @@ class _CheckTokenState extends State<CheckToken> {
                     // title: const Text(
                     //     "Allow your location "
                     // ),
-                    content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
+                    content: const Text("We will use your location to show vehicle positions relative to your current location and aid in easier vehicle searches. This information is only used while the application is open or in use"),
                     actions: [
                       // ElevatedButton(onPressed: (){
                       //   exit(0);
