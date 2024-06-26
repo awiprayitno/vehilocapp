@@ -341,7 +341,7 @@ class ApiService {
       return response.body.toString();
     } catch (e) {
       logger.e('ERROR add service: $e');
-      return 'ERROR add servicel';
+      return 'ERROR add service';
     }
 
   }
