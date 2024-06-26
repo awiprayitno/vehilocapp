@@ -37,7 +37,7 @@ class _BottomBarState extends State<BottomBar> {
     _navScreens = [
       mapScreen,
       const VehicleView(),
-      //const FuelServiceView(),
+      const FuelServiceView(),
       const AccountView(),
     ];
 
@@ -90,23 +90,23 @@ class _BottomBarState extends State<BottomBar> {
           color: BottomBar.currentIndex == 1 ? GlobalColor.textColor : GlobalColor.textColor,
         ),
       ),
-      // PersistentBottomNavBarItem(
-      //   icon: ColorFiltered(
-      //     colorFilter: ColorFilter.mode(
-      //       BottomBar.currentIndex == 2 ? GlobalColor.buttonColor : GlobalColor.textColor,
-      //       BlendMode.srcIn,
-      //     ),
-      //     child: const FaIcon(FontAwesomeIcons.screwdriverWrench, size: 18,),
-      //   ),
-      //   title: 'Maintenance',
-      //   activeColorPrimary: GlobalColor.textColor,
-      //   activeColorSecondary: GlobalColor.buttonColor,
-      //   inactiveColorPrimary: GlobalColor.buttonColor,
-      //   textStyle: GoogleFonts.poppins(
-      //     fontWeight: FontWeight.bold,
-      //     color: BottomBar.currentIndex == 2 ? GlobalColor.textColor : GlobalColor.textColor,
-      //   ),
-      // ),
+      PersistentBottomNavBarItem(
+        icon: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            BottomBar.currentIndex == 2 ? GlobalColor.buttonColor : GlobalColor.textColor,
+            BlendMode.srcIn,
+          ),
+          child: const FaIcon(FontAwesomeIcons.screwdriverWrench, size: 18,),
+        ),
+        title: 'Maintenance',
+        activeColorPrimary: GlobalColor.textColor,
+        activeColorSecondary: GlobalColor.buttonColor,
+        inactiveColorPrimary: GlobalColor.buttonColor,
+        textStyle: GoogleFonts.poppins(
+          fontWeight: FontWeight.bold,
+          color: BottomBar.currentIndex == 2 ? GlobalColor.textColor : GlobalColor.textColor,
+        ),
+      ),
       PersistentBottomNavBarItem(
         icon: ColorFiltered(
           colorFilter: ColorFilter.mode(
