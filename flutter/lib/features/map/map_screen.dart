@@ -126,6 +126,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
             markerId: MarkerId('${vehicle.vehicleId}lbl'),
             position: LatLng(vehicle.lat!, vehicle.lon!),
             icon: markerIcon,
+            alpha: 0.8,
             backgroundColor: Colors.white,
             textStyle: const TextStyle(color: Colors.black, fontSize: 30),
             // infoWindow: InfoWindow(
