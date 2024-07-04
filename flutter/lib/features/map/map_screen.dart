@@ -5,6 +5,7 @@ import 'package:VehiLoc/core/Api/websocket.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
@@ -38,9 +39,9 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   late Future<List<Geofences>> _fetchGeofences;
   late Future<List<Vehicle>> _fetchDataAndGeofences;
   late List<Vehicle> _allVehicles;
-  bool switchGeofences = true;
+  bool switchGeofences = false;
   bool switchCurrentLocation = false;
-  bool geofencesEnabled = true;
+  bool geofencesEnabled = false;
   late GoogleMapController _googleMapController;
 
   bool realtime = true;
@@ -304,7 +305,10 @@ void _resetCameraPosition() {
                 return Container();
               }else{
                 return  Row(children: [
-                  const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
+                  Container(
+                    margin : const EdgeInsets.only(left: 15,right: 5),
+                    child: const FaIcon(FontAwesomeIcons.info, size: 20, color: Colors.white,),),
+                  //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
                   SizedBox(
                     width: 51.0,
                     height: 31.0,
@@ -321,8 +325,8 @@ void _resetCameraPosition() {
                             realtime = !newValue;
                           });
                           final snackBarMessage = SnackBar(
-                            content: Text(newValue ? 'Showing Name' : 'Hiding Name'),
-                            duration: const Duration(seconds: 2),
+                            content: Text(newValue ? 'Showing Details (Disabled Realtime)' : 'Hiding Details (Enabled Realtime)'),
+                            duration: const Duration(seconds: 3),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(snackBarMessage);
                           if(realtime){
