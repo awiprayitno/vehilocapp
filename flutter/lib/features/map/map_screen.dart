@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:VehiLoc/core/Api/websocket.dart';
-import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
@@ -16,6 +16,7 @@ import 'dart:math';
 import 'package:VehiLoc/core/model/response_geofences.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:label_marker/label_marker.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   double? lat;
@@ -38,13 +39,17 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   late Future<List<Geofences>> _fetchGeofences;
   late Future<List<Vehicle>> _fetchDataAndGeofences;
   late List<Vehicle> _allVehicles;
-  bool switchGeofences = true;
+  bool switchGeofences = false;
   bool switchCurrentLocation = false;
-  bool geofencesEnabled = true;
+  bool geofencesEnabled = false;
   late GoogleMapController _googleMapController;
+
+  bool realtime = true;
 
   double? lat;
   double? lon;
+
+  Set<Marker> m = {};
 
   @override
   void initState() {
@@ -67,6 +72,8 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   }
 
   void realtimeHandler(Vehicle vehicle) {
+    m.clear();
+    logger.i("realtime data");
     if (vehicle.lat != 0.0 && vehicle.lon != 0.0) {
       for (var current in _allVehicles) {
         if (current.vehicleId == vehicle.vehicleId) {
@@ -77,6 +84,65 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
           break;
         }
       }
+    }
+  }
+
+
+  void setMarkers(bool isRealtime){
+
+    logger.i("setMarker");
+    logger.i(_allVehicles.length);
+    for(Vehicle vehicle in _allVehicles) {
+      BitmapDescriptor markerIcon;
+      DateTime? gpsdtWIB;
+
+      if(vehicle.lat != null && vehicle.lon != null){
+        if (vehicle.speed == 0) {
+          markerIcon = redMarkerIcon;
+        } else {
+          markerIcon = greenMarkerIcon;
+        }
+        if (vehicle.gpsdt != null) {
+          DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
+          gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
+          DateTime now = DateTime.now();
+          int differenceInDays = now.difference(gpsdtWIB).inDays;
+
+          if (differenceInDays > 7) {
+            markerIcon = greyMarkerIcon;
+          }
+        }
+        m.add(Marker(
+            markerId: MarkerId('${vehicle.vehicleId}mkr'),
+            position: LatLng(vehicle.lat!, vehicle.lon!),
+            icon: markerIcon,
+            infoWindow: InfoWindow(
+              title: ("${vehicle.name}"),
+              snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.type == 4 ? "${vehicle.baseMcc! ~/ 10}°C" : ""}"),
+            ),
+            rotation: vehicle.bearing?.toDouble() ?? 0.0
+        ));
+        if(!isRealtime){
+          m.addLabelMarker(LabelMarker(
+            markerId: MarkerId('${vehicle.vehicleId}lbl'),
+            position: LatLng(vehicle.lat!, vehicle.lon!),
+            icon: markerIcon,
+            alpha: 0.8,
+            backgroundColor: Colors.white,
+            textStyle: const TextStyle(color: Colors.black, fontSize: 30),
+            // infoWindow: InfoWindow(
+            //   title: ("${vehicle.name}"),
+            //   snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.type == 4 ? "${vehicle.baseMcc! ~/ 10}°C" : ""}"),
+            // ),
+            label: '${vehicle.name} \n${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB)} ${vehicle.type == 4 ? "${vehicle.baseMcc! ~/ 10}°C" : ""}',
+          )).then((value){
+            setState(() {
+            });
+          });
+        }
+
+      }
+      //List? selectedCustomer = ref.watch(selectedCustomerProvider.notifier).state.customer;
     }
   }
 
@@ -181,6 +247,9 @@ void _resetCameraPosition() {
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if(m.isEmpty){
+      setMarkers(realtime);
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -197,7 +266,9 @@ void _resetCameraPosition() {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Container();
               } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                return SizedBox(
+                return Row(children: [
+                  const Text("Geofence ", style: TextStyle(fontSize: 16, color: Colors.white),),
+                  SizedBox(
                   width: 51.0,
                   height: 31.0,
                   child: Container(
@@ -221,12 +292,62 @@ void _resetCameraPosition() {
                       activeColor: CupertinoColors.activeGreen,
                     ),
                   ),
-                );
+                )],);
               } else {
                 return Container();
               }
             },
           ),
+        FutureBuilder<List<Geofences>>(
+            future: _fetchGeofences,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container();
+              }else{
+                return  Row(children: [
+                  Container(
+                    margin : const EdgeInsets.only(left: 15,right: 5),
+                    child: const FaIcon(FontAwesomeIcons.info, size: 20, color: Colors.white,),),
+                  //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
+                  SizedBox(
+                    width: 51.0,
+                    height: 31.0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child:
+                      CupertinoSwitch(
+                        value: !realtime,
+                        onChanged: (newValue) {
+                          setState(() {
+                            realtime = !newValue;
+                          });
+                          final snackBarMessage = SnackBar(
+                            content: Text(newValue ? 'Showing Details (Disabled Realtime)' : 'Hiding Details (Enabled Realtime)'),
+                            duration: const Duration(seconds: 3),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(snackBarMessage);
+                          if(realtime){
+                            WebSocketProvider.subscribe(realtimeHandler);
+                          }else{
+                            try{
+                              setMarkers(realtime);
+                            }catch(e){
+                              logger.e(e);
+                            }
+                            WebSocketProvider.unsubscribe(realtimeHandler);
+                          }
+
+                        },
+                        activeColor: CupertinoColors.activeGreen,
+                      ),
+                    ),
+                  )],);
+              }
+            }),
+
           TextButton(
             onPressed: _zoomOutMap,
             child: Text(
@@ -237,6 +358,7 @@ void _resetCameraPosition() {
               ),
             ),
           ),
+
 
           // IconButton(
           //   icon: Icon(Icons.more_vert, color: GlobalColor.textColor),
@@ -317,41 +439,42 @@ void _resetCameraPosition() {
                           ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
                           : zoomLevel,
                     ),
-                    markers: Set<Marker>.from(
-                      _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
-                        BitmapDescriptor markerIcon;
-                        DateTime? gpsdtWIB;
-
-                        if (vehicle.speed == 0) {
-                          markerIcon = redMarkerIcon;
-                        } else {
-                          markerIcon = greenMarkerIcon;
-                        }
-
-                        if (vehicle.gpsdt != null) {
-                          DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
-                          gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
-                          DateTime now = DateTime.now();
-                          int differenceInDays = now.difference(gpsdtWIB).inDays;
-
-                          if (differenceInDays > 7) {
-                            markerIcon = greyMarkerIcon;
-                          }
-                        }
-
-                        return Marker(
-                          markerId: MarkerId('${vehicle.vehicleId}'),
-                          position: LatLng(vehicle.lat!, vehicle.lon!),
-                          icon: markerIcon,
-                          infoWindow: InfoWindow(
-                            title: ("${vehicle.name}"),
-                            snippet: ""
-                            //("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
-                          ),
-                          rotation: vehicle.bearing?.toDouble() ?? 0.0,
-                        );
-                      }),
-                    ),
+                    markers: m,
+                    // Set<Marker>.from(
+                    //   _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
+                    //     BitmapDescriptor markerIcon;
+                    //     DateTime? gpsdtWIB;
+                    //
+                    //     if (vehicle.speed == 0) {
+                    //       markerIcon = redMarkerIcon;
+                    //     } else {
+                    //       markerIcon = greenMarkerIcon;
+                    //     }
+                    //
+                    //     if (vehicle.gpsdt != null) {
+                    //       DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
+                    //       gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
+                    //       DateTime now = DateTime.now();
+                    //       int differenceInDays = now.difference(gpsdtWIB).inDays;
+                    //
+                    //       if (differenceInDays > 7) {
+                    //         markerIcon = greyMarkerIcon;
+                    //       }
+                    //     }
+                    //
+                    //     return Marker(
+                    //       markerId: MarkerId('${vehicle.vehicleId}'),
+                    //       position: LatLng(vehicle.lat!, vehicle.lon!),
+                    //       icon: markerIcon,
+                    //       infoWindow: InfoWindow(
+                    //         title: ("${vehicle.name}"),
+                    //         snippet: ""
+                    //         //("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
+                    //       ),
+                    //       rotation: vehicle.bearing?.toDouble() ?? 0.0,
+                    //     );
+                    //   }),
+                    // ),
                     myLocationEnabled: true,
                     compassEnabled: true,
                     zoomControlsEnabled: false,
@@ -380,41 +503,7 @@ void _resetCameraPosition() {
                           ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
                           : zoomLevel,
                     ),
-                    markers: Set<Marker>.from(
-                      _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
-                        BitmapDescriptor markerIcon;
-                        DateTime? gpsdtWIB;
-
-                        //List? selectedCustomer = ref.watch(selectedCustomerProvider.notifier).state.customer;
-                        if (vehicle.speed == 0) {
-                          markerIcon = redMarkerIcon;
-                        } else {
-                          markerIcon = greenMarkerIcon;
-                        }
-
-                        if (vehicle.gpsdt != null) {
-                          DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
-                          gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
-                          DateTime now = DateTime.now();
-                          int differenceInDays = now.difference(gpsdtWIB).inDays;
-
-                          if (differenceInDays > 7) {
-                            markerIcon = greyMarkerIcon;
-                          }
-                        }
-
-                        return Marker(
-                          markerId: MarkerId('${vehicle.vehicleId}'),
-                          position: LatLng(vehicle.lat!, vehicle.lon!),
-                          icon: markerIcon,
-                          infoWindow: InfoWindow(
-                            title: ("${vehicle.name}"),
-                            snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.type == 4 ? "${vehicle.baseMcc! ~/ 10}°C" : ""}"),
-                          ),
-                          rotation: vehicle.bearing?.toDouble() ?? 0.0,
-                        );
-                      }),
-                    ),
+                    markers: m,
                     polygons: _createGeofences(geofences),
                     myLocationEnabled: true,
                     compassEnabled: true,

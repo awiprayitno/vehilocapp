@@ -19,7 +19,7 @@ class WebSocketProvider {
   static WebSocketChannel? channel;
   static List<void Function(Vehicle)> subs = [];
 
-  static void subscribe(void Function(Vehicle) cb) {
+  static Future<void> subscribe(void Function(Vehicle) cb) async {
     if (subs.isEmpty) {
       connect();
     }
