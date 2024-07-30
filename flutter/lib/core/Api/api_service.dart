@@ -346,4 +346,47 @@ class ApiService {
 
   }
 
+  Future<String> getFuelData({
+    required int page,
+    required int perPage,
+    required int vehicleIds,
+
+  }) async {
+    final String apiUrl = "$baseApiUrl/v1.0/fuels?vehicle_ids=$vehicleIds&page=$page&per_page=$perPage";
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.get(
+        Uri.parse(
+          apiUrl,
+        ),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+        },
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response add fuel");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      logger.e('ERROR add fuel: $e');
+      return 'ERROR add fuel';
+    }
+
+  }
+
 }

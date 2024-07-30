@@ -3,11 +3,13 @@ import 'dart:convert';
 
 import 'package:VehiLoc/core/utils/loading_widget.dart';
 import 'package:VehiLoc/features/maintenance/widget/add_edit_fuel.dart';
+import 'package:VehiLoc/features/maintenance/widget/fuel_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:intl/intl.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 
 import '../../core/Api/api_service.dart';
 import '../../core/model/response_vehicles.dart';
@@ -23,12 +25,74 @@ class FuelView extends ConsumerStatefulWidget {
 }
 
 class _FuelViewState extends ConsumerState<FuelView> {
+  final PagingController<int, dynamic> _pagingController =
+  PagingController(firstPageKey: 0);
+  late List<Widget> children;
+  final int _pageSize = 20;
+
   final ApiService apiService = ApiService();
+  List<DropdownMenuItem> listVehicle = [];
+  int? selectedVehicle;
+  bool isLoading = true;
+  RefreshController _refreshController = RefreshController();
+
+  Future<void> _fetchPage(int pageKey, int vehicleId) async {
+    try {
+      var newItems =
+
+          await apiService.getFuelData(
+              page: pageKey,
+              perPage: _pageSize,
+              vehicleIds: vehicleId);
+      //
+      // await getRequest.getCustomers(
+      //   teamToken: companyModels["team_token"],
+      //   token: userModels["token"],
+      //   page: pageKey,
+      //   perPage: _pageSize,
+      //   q: searchText.text,
+      // );
+
+
+
+
+      var items = jsonDecode(newItems);
+
+
+
+
+      logger.d(items);
+
+
+      final isLastPage = items["data"].length < _pageSize;
+      if (isLastPage) {
+        _pagingController.appendLastPage(items["data"]);
+      } else {
+        pageKey = pageKey + 1;
+        _pagingController.appendPage(items["data"], pageKey);
+      }
+    } catch (error) {
+      _pagingController.error = error;
+    }
+  }
+
+  void _onRefresh() async {
+    // monitor network fetch
+    setState(() {
+      _pagingController.refresh();
+      children = [];
+    });
+    _refreshController.refreshCompleted();
+  }
+
+  void _onLoading() async {
+    _refreshController.loadComplete();
+  }
 
   Future<List<Vehicle>> fetchAllData() async {
     try {
       final List<Vehicle> vehicles = await apiService.fetchVehicles();
-      final List<Vehicle> validVehicles = vehicles.where((vehicle) => vehicle.lat != 0.0 && vehicle.lon != 0.0).toList();
+      final List<Vehicle> validVehicles = vehicles.where((vehicle) => vehicle.lat != 0.0 && vehicle.lon != 0.0 && vehicle.vehicleId != null).toList();
       return validVehicles;
     } catch (e) {
       logger.e("Error fetching data: $e");
@@ -42,6 +106,27 @@ class _FuelViewState extends ConsumerState<FuelView> {
 
     super.initState();
 
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      fetchAllData().then((value){
+        for(Vehicle vehicle in value){
+          listVehicle.add(
+              DropdownMenuItem(value: vehicle.vehicleId.toString(),
+                child: Text(vehicle.name.toString()),));
+        }
+        selectedVehicle = value[0].vehicleId;
+        logger.d("selected");
+        logger.i(value[0].name);
+        logger.i(selectedVehicle);
+
+        _pagingController.addPageRequestListener((pageKey) {
+          _fetchPage(pageKey, selectedVehicle!);
+        });
+        setState(() {
+          isLoading = false;
+        });
+      });
+    });
+
   }
 
 
@@ -49,36 +134,89 @@ class _FuelViewState extends ConsumerState<FuelView> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(5),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(left: 10, top: 10),
-            alignment: Alignment.topLeft,
-            child: ElevatedButton(
-              style: const ButtonStyle(
-                  backgroundColor: MaterialStatePropertyAll(Colors.green)
+    if(isLoading){
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }else{
+      return Container(
+        margin: const EdgeInsets.all(5),
+        child: Column(
+          children: [
+            Container(
+                margin: EdgeInsets.only(left: 10, right: 10),
+                width: MediaQuery.of(context).size.width,
+                height: 50,
+                child: DropdownButton(
+                    value: selectedVehicle.toString(),
+                    isExpanded: true,
+                    items: listVehicle, onChanged: (item){
+                  logger.i(item);
+                  setState(() {
+                    selectedVehicle = int.parse(item);
+                    _refreshController.requestRefresh();
+                  });
+
+                })),
+            Container(
+              margin: const EdgeInsets.only(left: 10, top: 10),
+              alignment: Alignment.topLeft,
+              child: ElevatedButton(
+                  style: const ButtonStyle(
+                      backgroundColor: MaterialStatePropertyAll(Colors.green)
+                  ),
+                  onPressed: (){
+                    circularLoading(context);
+                    fetchAllData().then((value){
+                      Navigator.of(context, rootNavigator: true).pop();
+                      PersistentNavBarNavigator.pushNewScreen(
+                        context,
+                        screen: AddEditFuel(value),
+                        withNavBar: false,
+                        pageTransitionAnimation: PageTransitionAnimation.fade,
+                      );
+
+
+                    });
+
+
+                  }, child: const Icon(Icons.add, color: Colors.white,)),),
+            Expanded(
+              flex: 9,
+                child: SmartRefresher(
+              enablePullDown: true,
+              enablePullUp: false,
+              controller: _refreshController,
+              onRefresh: _onRefresh,
+              onLoading: _onLoading,
+              child: PagedListView<int, dynamic>(
+                addRepaintBoundaries: true,
+                cacheExtent: 10,
+                addSemanticIndexes: true,
+                pagingController: _pagingController,
+                builderDelegate: PagedChildBuilderDelegate<dynamic>(
+                  animateTransitions: true,
+                  noMoreItemsIndicatorBuilder: (_) => const Column(children: [
+                    Divider(
+                      height: 20,
+                    ),
+                  ]),
+                  // [transitionDuration] has a default value of 250 milliseconds.
+                  transitionDuration: const Duration(milliseconds: 250),
+                  itemBuilder: (context, item, index) {
+                    logger.i("index $index");
+                    logger.wtf(item);
+                    return SizedBox(child: Text(item),);
+                  },
+                ),
               ),
-              onPressed: (){
-                circularLoading(context);
-                fetchAllData().then((value){
-                  Navigator.of(context, rootNavigator: true).pop();
-                  PersistentNavBarNavigator.pushNewScreen(
-                    context,
-                    screen: AddEditFuel(value),
-                    withNavBar: false,
-                    pageTransitionAnimation: PageTransitionAnimation.fade,
-                  );
+            ))
 
-
-                });
-
-
-              }, child: const Icon(Icons.add, color: Colors.white,)),)
           ],
-      ),
-    );
+        ),
+      );
+    }
+
   }
 }
 
