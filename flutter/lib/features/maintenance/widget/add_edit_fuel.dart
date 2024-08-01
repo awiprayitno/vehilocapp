@@ -51,10 +51,22 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
   void initState() {
     logger.i("vehicle data");
     logger.wtf(widget.arguments);
-    for(Vehicle i in widget.arguments){
+    for(Vehicle i in widget.arguments["vehicles"]){
       if(i.vehicleId != null){
         vehiclesData.add(DropdownMenuEntry(value: i.vehicleId, label: i.name.toString()));
       }
+    }
+
+    if(widget.arguments["item"] != null){
+        fuelBensin = widget.arguments["item"]["type"] == 1;
+        litreController.text = widget.arguments["item"]["volume"].toString();
+        priceController.text = widget.arguments["item"]["price"].toString();
+        spbuController.text = widget.arguments["item"]["spbu"];
+        notesController.text = widget.arguments["item"]["note"];
+        dateTimeController.text = DateFormat("yyyy-MM-dd HH:mm").format(DateTime.fromMillisecondsSinceEpoch(
+            widget.arguments["item"]["dt"] * 1000).toLocal());
+        selectedDt = DateTime.fromMillisecondsSinceEpoch(
+            widget.arguments["item"]["dt"] * 1000).toLocal();
     }
 
 
@@ -88,6 +100,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
               Container(
                 margin: const EdgeInsets.only(top: 10),
                 child: DropdownMenu(
+                  initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]: "",
 
                   menuHeight: MediaQuery.of(context).size.height -500,
                   width: MediaQuery.of(context).size.width -20,
@@ -222,7 +235,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(onPressed: (){}, icon: const Icon(Icons.camera_alt)),
+            //IconButton(onPressed: (){}, icon: const Icon(Icons.camera_alt)),
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
             ),onPressed: (){
@@ -257,9 +270,10 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                       }
                     });
                   }
-                }, child: const Text("Save", style: TextStyle(
+                }, child:  Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
                 color: Colors.white
             ))),
+            widget.arguments["item"] == null ?
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
             ),onPressed: (){
@@ -290,7 +304,6 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                 apiService.addFuelData(data: dataTemp).then((value){
                   logger.i(value);
                   if(jsonDecode(value)["status"] == "SUCCESS"){
-
                     dateTimeController.clear();
                     litreController.clear();
                     priceController.clear();
@@ -314,7 +327,8 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
 
             }, child: const Text("Save and Add", style: TextStyle(
                 color: Colors.white
-            ))),
+            )))
+            : const SizedBox(),
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.red)
             ),onPressed: (){

@@ -41,11 +41,28 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
   void initState() {
     logger.i("vehicle data");
     logger.wtf(widget.arguments);
-    for(Vehicle i in widget.arguments) {
+    for(Vehicle i in widget.arguments["vehicles"]) {
       if (i.vehicleId != null) {
         vehiclesData.add(
             DropdownMenuEntry(value: i.vehicleId, label: i.name.toString()));
       }
+    }
+    if(widget.arguments["item"] != null){
+      kmController.text = widget.arguments["item"]["km"].toString();
+      titleController.text =  widget.arguments["item"]["title"];
+      workshopController.text = widget.arguments["item"]["workshop"];
+      notesController.text = widget.arguments["item"]["description"];
+      durationController.text = widget.arguments["item"]["days"].toString();
+      nextServiceDateController.text = DateFormat("yyyy-MM-dd").format(DateTime.fromMillisecondsSinceEpoch(
+          widget.arguments["item"]["next_service_dt"] * 1000).toLocal());
+      nextServiceKmController.text = widget.arguments["item"]["next_service_km"].toString();
+      sparepartCostController.text = widget.arguments["item"]["sparepart_cost"].toString();
+      serviceCostController.text = widget.arguments["item"]["service_cost"].toString();
+      dateTimeController.text = DateFormat("yyyy-MM-dd").format(DateTime.fromMillisecondsSinceEpoch(
+          widget.arguments["item"]["dt"] * 1000).toLocal());
+      selectedDt = DateTime.fromMillisecondsSinceEpoch(
+          widget.arguments["item"]["dt"] * 1000).toLocal();
+
     }
     super.initState();
   }
@@ -77,6 +94,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 margin: const EdgeInsets.only(top: 10),
                 child: DropdownMenu(
 
+                  initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]: "",
                   menuHeight: MediaQuery.of(context).size.height -500,
                   width: MediaQuery.of(context).size.width -20,
                   hintText: "Vehicle",
@@ -267,7 +285,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(onPressed: (){}, icon: const Icon(Icons.camera_alt)),
+            //IconButton(onPressed: (){}, icon: const Icon(Icons.camera_alt)),
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
             ),onPressed: (){
@@ -307,12 +325,14 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   }
                 });
               }
-            }, child: const Text("Save", style: TextStyle(
+            }, child: Text(widget.arguments["item"] == null ? "Save" : "Edit", style: TextStyle(
                 color: Colors.white
             ))),
+            widget.arguments["item"] == null ?
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
-            ),onPressed: (){
+            ),
+                onPressed: (){
               if(vehicleId == ""){
                 ScaffoldMessenger.of(context).clearSnackBars();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -361,9 +381,10 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 });
               }
 
-            }, child: const Text("Save and Add", style: TextStyle(
+            }, child: const Text("Save and Add",
+                    style: TextStyle(
                 color: Colors.white
-            ))),
+            ))) : SizedBox(),
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.red)
             ),onPressed: (){

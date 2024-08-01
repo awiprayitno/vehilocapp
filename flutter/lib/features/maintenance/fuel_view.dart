@@ -27,23 +27,23 @@ class FuelView extends ConsumerStatefulWidget {
 class _FuelViewState extends ConsumerState<FuelView> {
   final PagingController<int, dynamic> _pagingController =
   PagingController(firstPageKey: 0);
-  late List<Widget> children;
+  //late List<Widget> children;
   final int _pageSize = 20;
 
   final ApiService apiService = ApiService();
   List<DropdownMenuItem> listVehicle = [];
   int? selectedVehicle;
-  bool isLoading = true;
+  bool isLoad = true;
   RefreshController _refreshController = RefreshController();
 
-  Future<void> _fetchPage(int pageKey, int vehicleId) async {
+  Future<void> _fetchPage(int pageKey) async {
     try {
       var newItems =
 
           await apiService.getFuelData(
-              page: pageKey,
+              page: pageKey + 1,
               perPage: _pageSize,
-              vehicleIds: vehicleId);
+              vehicleIds: selectedVehicle!);
       //
       // await getRequest.getCustomers(
       //   teamToken: companyModels["team_token"],
@@ -72,6 +72,8 @@ class _FuelViewState extends ConsumerState<FuelView> {
         _pagingController.appendPage(items["data"], pageKey);
       }
     } catch (error) {
+      logger.e("error");
+      logger.e(error);
       _pagingController.error = error;
     }
   }
@@ -80,7 +82,7 @@ class _FuelViewState extends ConsumerState<FuelView> {
     // monitor network fetch
     setState(() {
       _pagingController.refresh();
-      children = [];
+      //children = [];
     });
     _refreshController.refreshCompleted();
   }
@@ -103,9 +105,10 @@ class _FuelViewState extends ConsumerState<FuelView> {
 
   @override
   void initState() {
-
+    _pagingController.addPageRequestListener((pageKey) {
+      _fetchPage(pageKey);
+    });
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_){
       fetchAllData().then((value){
         for(Vehicle vehicle in value){
@@ -117,13 +120,11 @@ class _FuelViewState extends ConsumerState<FuelView> {
         logger.d("selected");
         logger.i(value[0].name);
         logger.i(selectedVehicle);
-
-        _pagingController.addPageRequestListener((pageKey) {
-          _fetchPage(pageKey, selectedVehicle!);
-        });
         setState(() {
-          isLoading = false;
+          isLoad = false;
         });
+
+
       });
     });
 
@@ -134,17 +135,21 @@ class _FuelViewState extends ConsumerState<FuelView> {
 
   @override
   Widget build(BuildContext context) {
-    if(isLoading){
+    if(isLoad){
       return const Center(
         child: CircularProgressIndicator(),
       );
     }else{
+
       return Container(
         margin: const EdgeInsets.all(5),
         child: Column(
           children: [
+            Expanded(
+              flex: 1,
+                child:
             Container(
-                margin: EdgeInsets.only(left: 10, right: 10),
+                margin: const EdgeInsets.only(left: 10, right: 10),
                 width: MediaQuery.of(context).size.width,
                 height: 50,
                 child: DropdownButton(
@@ -157,8 +162,10 @@ class _FuelViewState extends ConsumerState<FuelView> {
                     _refreshController.requestRefresh();
                   });
 
-                })),
-            Container(
+                }))),
+            Expanded(
+                flex: 1,
+                child: Container(
               margin: const EdgeInsets.only(left: 10, top: 10),
               alignment: Alignment.topLeft,
               child: ElevatedButton(
@@ -166,12 +173,14 @@ class _FuelViewState extends ConsumerState<FuelView> {
                       backgroundColor: MaterialStatePropertyAll(Colors.green)
                   ),
                   onPressed: (){
+                    Map data = {};
                     circularLoading(context);
                     fetchAllData().then((value){
+                      data["vehicles"] = value;
                       Navigator.of(context, rootNavigator: true).pop();
                       PersistentNavBarNavigator.pushNewScreen(
                         context,
-                        screen: AddEditFuel(value),
+                        screen: AddEditFuel(data),
                         withNavBar: false,
                         pageTransitionAnimation: PageTransitionAnimation.fade,
                       );
@@ -180,37 +189,72 @@ class _FuelViewState extends ConsumerState<FuelView> {
                     });
 
 
-                  }, child: const Icon(Icons.add, color: Colors.white,)),),
+                  }, child: const Icon(Icons.add, color: Colors.white,)),)),
             Expanded(
               flex: 9,
-                child: SmartRefresher(
-              enablePullDown: true,
-              enablePullUp: false,
-              controller: _refreshController,
-              onRefresh: _onRefresh,
-              onLoading: _onLoading,
-              child: PagedListView<int, dynamic>(
-                addRepaintBoundaries: true,
-                cacheExtent: 10,
-                addSemanticIndexes: true,
-                pagingController: _pagingController,
-                builderDelegate: PagedChildBuilderDelegate<dynamic>(
-                  animateTransitions: true,
-                  noMoreItemsIndicatorBuilder: (_) => const Column(children: [
-                    Divider(
-                      height: 20,
+                child: Container(
+                  margin: EdgeInsets.only(top: 10),
+                  child: SmartRefresher(
+                  enablePullDown: true,
+                  enablePullUp: false,
+                  controller: _refreshController,
+                  onRefresh: _onRefresh,
+                  onLoading: _onLoading,
+                  child: PagedListView<int, dynamic>(
+                    addRepaintBoundaries: true,
+                    cacheExtent: 10,
+                    addSemanticIndexes: true,
+                    pagingController: _pagingController,
+                    builderDelegate: PagedChildBuilderDelegate<dynamic>(
+                      animateTransitions: true,
+                      noMoreItemsIndicatorBuilder: (_) => const Column(children: [
+                        Divider(
+                          height: 20,
+                        ),
+                      ]),
+                      // [transitionDuration] has a default value of 250 milliseconds.
+                      transitionDuration: const Duration(milliseconds: 250),
+                      itemBuilder: (context, item, index) {
+                        logger.i("index $index");
+                        logger.wtf(item);
+                        return ListTile(
+                          title: Text("${item["vehicle"]} ${DateFormat("dd-MMMM-yyyy").format(DateTime.fromMillisecondsSinceEpoch(item["dt"] * 1000).toLocal())}"),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("${item["volume"]} Litre ${item["type"] == 1 ?"Bensin":"Solar"} (${item["spbu"]})"),
+                              Text(item["price"].toString()),
+                              Text(item["note"])
+                          ],),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: (){
+                              Map data = {};
+                              circularLoading(context);
+                              fetchAllData().then((value){
+                                data["vehicles"] = value;
+                                data["item"] = item;
+                                data["item"]["vehicle_id"] = selectedVehicle;
+                                logger.i("values");
+                                logger.d(data);
+                                Navigator.of(context, rootNavigator: true).pop();
+                                PersistentNavBarNavigator.pushNewScreen(
+                                  context,
+                                  screen: AddEditFuel(data),
+                                  withNavBar: false,
+                                  pageTransitionAnimation: PageTransitionAnimation.fade,
+                                );
+
+
+                              });
+                            },
+                          ),
+                        );
+                      },
                     ),
-                  ]),
-                  // [transitionDuration] has a default value of 250 milliseconds.
-                  transitionDuration: const Duration(milliseconds: 250),
-                  itemBuilder: (context, item, index) {
-                    logger.i("index $index");
-                    logger.wtf(item);
-                    return SizedBox(child: Text(item),);
-                  },
-                ),
-              ),
-            ))
+                  ),
+                ),)
+              )
 
           ],
         ),
