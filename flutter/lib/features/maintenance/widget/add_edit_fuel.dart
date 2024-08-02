@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:VehiLoc/core/utils/colors.dart';
+import 'package:VehiLoc/core/utils/loading_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -100,7 +101,8 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
               Container(
                 margin: const EdgeInsets.only(top: 10),
                 child: DropdownMenu(
-                  initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]: "",
+                  initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]:
+                  widget.arguments["selected_vehicle"],
 
                   menuHeight: MediaQuery.of(context).size.height -500,
                   width: MediaQuery.of(context).size.width -20,
@@ -239,6 +241,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
             ),onPressed: (){
+              circularLoading(context);
               if(vehicleId == ""){
                 ScaffoldMessenger.of(context).clearSnackBars();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -251,6 +254,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                     duration: Duration(seconds: 1),
                   ),
                 );
+                Navigator.of(context).pop(true);
               }else {
                     Map dataTemp = {};
                     dataTemp = {
@@ -266,6 +270,9 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                     apiService.addFuelData(data: dataTemp).then((value) {
                       logger.i(value);
                       if (jsonDecode(value)["status"] == "SUCCESS") {
+                        Navigator.of(context).pop(true);
+                        Navigator.of(context).pop(true);
+                      }else{
                         Navigator.of(context).pop(true);
                       }
                     });
@@ -332,7 +339,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.red)
             ),onPressed: (){
-              Navigator.of(context).pop(true);
+              Navigator.of(context).pop(false);
             }, child: const Text("Cancel", style: TextStyle(
                 color: Colors.white
             ),)),

@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   omni_datetime_picker: ^1.1.0
+  dropdown_search: ^5.0.6
   provider: ^6.1.1 # state management
   intl: ^0.19.0 # to use international function
   connectivity_plus: ^5.0.2 # to monitor the internet connection status 
