@@ -248,7 +248,11 @@ class _FuelViewState extends ConsumerState<FuelView> {
                                       screen: AddEditFuel(data),
                                       withNavBar: false,
                                       pageTransitionAnimation: PageTransitionAnimation.fade,
-                                    );
+                                    ).then((value){
+                                      if(value == true){
+                                        _refreshController.requestRefresh();
+                                      }
+                                    });
 
 
                                   });

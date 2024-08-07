@@ -70,6 +70,8 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
             widget.arguments["item"]["dt"] * 1000).toLocal();
     }
 
+    vehicleId = widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"].toString():
+    widget.arguments["selected_vehicle"].toString();
 
     super.initState();
   }
@@ -256,9 +258,10 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                 );
                 Navigator.of(context).pop(true);
               }else {
+                try{
                     Map dataTemp = {};
                     dataTemp = {
-                      "fuel_id": "",
+                      "fuel_id": widget.arguments["item"] == null ? "" : widget.arguments["item"]["id"].toString(),
                       "vehicle_id": vehicleId,
                       "date": dateTimeController.text,
                       "type": fuelBensin ? "1" : "2",
@@ -276,6 +279,11 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                         Navigator.of(context).pop(true);
                       }
                     });
+                }catch(e){
+                  Navigator.of(context).pop(true);
+                  logger.e("error edit fuel");
+                  logger.e(e);
+                }
                   }
                 }, child:  Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
                 color: Colors.white

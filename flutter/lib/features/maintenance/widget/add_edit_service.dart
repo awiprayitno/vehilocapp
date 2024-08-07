@@ -9,6 +9,7 @@ import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 import '../../../core/Api/api_service.dart';
 import '../../../core/model/response_vehicles.dart';
 import '../../../core/utils/colors.dart';
+import '../../../core/utils/loading_widget.dart';
 import '../../../core/utils/logger.dart';
 
 
@@ -64,6 +65,8 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
           widget.arguments["item"]["dt"] * 1000).toLocal();
 
     }
+    vehicleId = widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"].toString():
+    widget.arguments["selected_vehicle"].toString();
     super.initState();
   }
 
@@ -94,7 +97,8 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                 margin: const EdgeInsets.only(top: 10),
                 child: DropdownMenu(
 
-                  initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]: "",
+                  initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]:
+                  widget.arguments["selected_vehicle"],
                   menuHeight: MediaQuery.of(context).size.height -500,
                   width: MediaQuery.of(context).size.width -20,
                   hintText: "Vehicle",
@@ -289,6 +293,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
             ),onPressed: (){
+              circularLoading(context);
               if(vehicleId == ""){
                 ScaffoldMessenger.of(context).clearSnackBars();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -302,9 +307,10 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   ),
                 );
               }else {
+                try{
                 Map dataTemp = {};
                 dataTemp = {
-                  "service_id" : "",
+                  "service_id" : widget.arguments["item"] == null ? "" : widget.arguments["item"]["id"].toString(),
                   "vehicle_id" : vehicleId,
                   "date" : dateTimeController.text,
                   "km" : kmController.text,
@@ -322,10 +328,18 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   logger.i(value);
                   if (jsonDecode(value)["status"] == "SUCCESS") {
                     Navigator.of(context).pop(true);
+                    Navigator.of(context).pop(true);
+                  }else{
+                    Navigator.of(context).pop(true);
                   }
                 });
+                }catch(e){
+                  Navigator.of(context).pop(true);
+                  logger.e("error edit fuel");
+                  logger.e(e);
+                }
               }
-            }, child: Text(widget.arguments["item"] == null ? "Save" : "Edit", style: TextStyle(
+            }, child: Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
                 color: Colors.white
             ))),
             widget.arguments["item"] == null ?

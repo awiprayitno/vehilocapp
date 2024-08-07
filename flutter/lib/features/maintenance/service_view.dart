@@ -32,10 +32,11 @@ class _ServiceViewState extends ConsumerState<ServiceView> {
   final int _pageSize = 20;
 
   final ApiService apiService = ApiService();
-  List<DropdownMenuItem> listVehicle = [];
+  List<DropdownMenuEntry> listVehicle = [];
   int? selectedVehicle;
   bool isLoad = true;
   RefreshController _refreshController = RefreshController();
+  TextEditingController searchVehicleController = TextEditingController();
 
   Future<void> _fetchPage(int pageKey) async {
     try {
@@ -114,10 +115,10 @@ class _ServiceViewState extends ConsumerState<ServiceView> {
       fetchAllData().then((value){
         for(Vehicle vehicle in value){
           listVehicle.add(
-              DropdownMenuItem(value: vehicle.vehicleId.toString(),
-                child: Text(vehicle.name.toString()),));
+              DropdownMenuEntry(value: vehicle.vehicleId.toString(), label: vehicle.name.toString(),));
         }
         selectedVehicle = value[0].vehicleId;
+        searchVehicleController.text = value[0].name!;
         logger.d("selected");
         logger.i(value[0].name);
         logger.i(selectedVehicle);
@@ -141,130 +142,137 @@ class _ServiceViewState extends ConsumerState<ServiceView> {
         child: CircularProgressIndicator(),
       );
     }else{
-
-      return Container(
-        margin: const EdgeInsets.all(5),
-        child: Column(
-          children: [
-            Expanded(
-                flex: 1,
-                child:
-                Container(
-                    margin: const EdgeInsets.only(left: 10, right: 10),
-                    width: MediaQuery.of(context).size.width,
-                    height: 50,
-                    child: DropdownButton(
-                        value: selectedVehicle.toString(),
-                        isExpanded: true,
-                        items: listVehicle, onChanged: (item){
+      return Scaffold(
+        floatingActionButton: FloatingActionButton(
+            child: const Icon(Icons.add),
+            onPressed: (){
+              Map data = {};
+              circularLoading(context);
+              fetchAllData().then((value){
+                data["vehicles"] = value;
+                data["selected_vehicle"] = selectedVehicle;
+                Navigator.of(context, rootNavigator: true).pop();
+                PersistentNavBarNavigator.pushNewScreen(
+                  context,
+                  screen: AddEditService(data),
+                  withNavBar: false,
+                  pageTransitionAnimation: PageTransitionAnimation.fade,
+                ).then((value){
+                  if(value == true){
+                    _refreshController.requestRefresh();
+                  }
+                });
+              });
+            }),
+        body: Container(
+          margin: const EdgeInsets.all(5),
+          child: Column(
+            children: [
+              Expanded(
+                  flex: 1,
+                  child: DropdownMenu(
+                    width: MediaQuery.of(context).size.width - 16.0,
+                    menuHeight: MediaQuery.of(context).size.height / 2,
+                    trailingIcon: IconButton(icon: const Icon(Icons.cancel), onPressed: (){searchVehicleController.clear();},),
+                    label: const Text("select vehicle"),
+                    requestFocusOnTap: true,
+                    initialSelection: listVehicle.first,
+                    controller: searchVehicleController,
+                    //value: selectedVehicle.toString(),
+                    //isExpanded: true,
+                    //
+                    // items: listVehicle,
+                    onSelected: (item){
+                      logger.i("selected");
                       logger.i(item);
                       setState(() {
                         selectedVehicle = int.parse(item);
                         _refreshController.requestRefresh();
                       });
 
-                    }))),
-            Expanded(
-                flex: 1,
-                child: Container(
-                  margin: const EdgeInsets.only(left: 10, top: 10),
-                  alignment: Alignment.topLeft,
-                  child: ElevatedButton(
-                      style: const ButtonStyle(
-                          backgroundColor: MaterialStatePropertyAll(Colors.green)
-                      ),
-                      onPressed: (){
-                        Map data = {};
-                        circularLoading(context);
-                        fetchAllData().then((value){
-                          data["vehicles"] = value;
-                          Navigator.of(context, rootNavigator: true).pop();
-                          PersistentNavBarNavigator.pushNewScreen(
-                            context,
-                            screen: AddEditService(data),
-                            withNavBar: false,
-                            pageTransitionAnimation: PageTransitionAnimation.fade,
-                          );
-
-
-                        });
-
-
-                      }, child: const Icon(Icons.add, color: Colors.white,)),)),
-            Expanded(
-                flex: 9,
-                child: Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  child: SmartRefresher(
-                    enablePullDown: true,
-                    enablePullUp: false,
-                    controller: _refreshController,
-                    onRefresh: _onRefresh,
-                    onLoading: _onLoading,
-                    child: PagedListView<int, dynamic>(
-                      addRepaintBoundaries: true,
-                      cacheExtent: 10,
-                      addSemanticIndexes: true,
-                      pagingController: _pagingController,
-                      builderDelegate: PagedChildBuilderDelegate<dynamic>(
-                        animateTransitions: true,
-                        noMoreItemsIndicatorBuilder: (_) => const Column(children: [
-                          Divider(
-                            height: 20,
-                          ),
-                        ]),
-                        // [transitionDuration] has a default value of 250 milliseconds.
-                        transitionDuration: const Duration(milliseconds: 250),
-                        itemBuilder: (context, item, index) {
-                          logger.i("index $index");
-                          logger.wtf(item);
-                          return Card(child: ListTile(
-                            title: Text("${item["title"]} (${item["km"]}Km) ${DateFormat("dd-MMMM-yyyy").format(DateTime.fromMillisecondsSinceEpoch(item["dt"] * 1000).toLocal())}"),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("${item["workshop"]} (${item["days"]} days)"),
-                                Text("Next Service Date ${DateFormat("dd-MMMM-yyyy").format(DateTime.fromMillisecondsSinceEpoch(item["dt"] * 1000).toLocal())}"),
-                                Text("Next Service Km ${item["next_service_km"]}"),
-                                Text("Sparepart : ${item["sparepart_cost"]}"),
-                                Text("Service : ${item["service_cost"]}"),
-                                Text("Total : ${item["total_cost"]}"),
-                                Text("${item["description"]}"),
-
-                              ],),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: (){
-                                Map data = {};
-                                circularLoading(context);
-                                fetchAllData().then((value){
-                                  data["vehicles"] = value;
-                                  data["item"] = item;
-                                  data["item"]["vehicle_id"] = selectedVehicle;
-                                  logger.i("values");
-                                  logger.d(data);
-                                  Navigator.of(context, rootNavigator: true).pop();
-                                  PersistentNavBarNavigator.pushNewScreen(
-                                    context,
-                                    screen: AddEditService(data),
-                                    withNavBar: false,
-                                    pageTransitionAnimation: PageTransitionAnimation.fade,
-                                  );
-
-
-                                });
-                              },
+                    },
+                    dropdownMenuEntries: listVehicle,)),
+              Expanded(
+                  flex: 9,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    child: SmartRefresher(
+                      enablePullDown: true,
+                      enablePullUp: false,
+                      controller: _refreshController,
+                      onRefresh: _onRefresh,
+                      onLoading: _onLoading,
+                      child: PagedListView<int, dynamic>(
+                        addRepaintBoundaries: true,
+                        cacheExtent: 10,
+                        addSemanticIndexes: true,
+                        pagingController: _pagingController,
+                        builderDelegate: PagedChildBuilderDelegate<dynamic>(
+                          animateTransitions: true,
+                          noMoreItemsIndicatorBuilder: (_) => const Column(children: [
+                            Divider(
+                              height: 20,
                             ),
-                          ),);
-                        },
-                      ),
-                    ),
-                  ),)
-            )
+                          ]),
+                          // [transitionDuration] has a default value of 250 milliseconds.
+                          transitionDuration: const Duration(milliseconds: 250),
+                          itemBuilder: (context, item, index) {
+                            logger.i("index $index");
+                            logger.wtf(item);
+                            return Card(child: ListTile(
+                              title: Text("${item["title"]} (${item["km"]}Km) ${DateFormat("dd-MMMM-yyyy").format(DateTime.fromMillisecondsSinceEpoch(item["dt"] * 1000).toLocal())}"),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("${item["workshop"]} (${item["days"]} days)"),
+                                  Text("Next Service Date ${DateFormat("dd-MMMM-yyyy").format(DateTime.fromMillisecondsSinceEpoch(item["dt"] * 1000).toLocal())}"),
+                                  Text("Next Service Km ${item["next_service_km"]}"),
+                                  Text("Sparepart : ${item["sparepart_cost"]}"),
+                                  Text("Service : ${item["service_cost"]}"),
+                                  Text("Total : ${item["total_cost"]}"),
+                                  Text("${item["description"]}"),
 
-          ],
+                                ],),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: (){
+                                  Map data = {};
+                                  circularLoading(context);
+                                  fetchAllData().then((value){
+                                    data["vehicles"] = value;
+                                    data["item"] = item;
+                                    data["item"]["vehicle_id"] = selectedVehicle;
+                                    logger.i("values");
+                                    logger.d(data);
+                                    Navigator.of(context, rootNavigator: true).pop();
+                                    PersistentNavBarNavigator.pushNewScreen(
+                                      context,
+                                      screen: AddEditService(data),
+                                      withNavBar: false,
+                                      pageTransitionAnimation: PageTransitionAnimation.fade,
+                                    ).then((value){
+                                      if(value == true){
+                                        _refreshController.requestRefresh();
+                                      }
+                                    });
+
+
+                                  });
+                                },
+                              ),
+                            ),);
+                          },
+                        ),
+                      ),
+                    ),)
+              )
+
+            ],
+          ),
         ),
       );
+
+
     }
 
   }
