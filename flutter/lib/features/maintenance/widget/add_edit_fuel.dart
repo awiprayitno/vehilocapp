@@ -239,7 +239,60 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            //IconButton(onPressed: (){}, icon: const Icon(Icons.camera_alt)),
+            widget.arguments["item"] != null ?
+            IconButton(onPressed: () async {
+              showDialog(context: context, builder: (BuildContext c){
+                return AlertDialog(
+                  title: const Text("Konfirmasi Hapus"),
+                  content: const Text("Yakin ingin menghapus data?"),
+                  actions: [
+                    ElevatedButton(onPressed: () async {
+                      Navigator.of(c).pop();
+                      circularLoading(context);
+                      await apiService.deleteFuelData(fuelId: widget.arguments["item"]["id"].toString()).then((value){
+                        Navigator.of(context).pop();
+                        try{
+                          if(jsonDecode(value)["status"] == "SUCCESS"){
+                            logger.i("success");
+                            Navigator.of(context).pop(true);
+                          }else{
+                            ScaffoldMessenger.of(context).clearSnackBars();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  jsonDecode(value)["result"].toString(),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          }
+                        }catch(e){
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString(),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      });
+                    }, child: const Text("Ya")),
+                    ElevatedButton(onPressed: (){
+                      Navigator.of(c).pop();
+                    }, child: const Text("Batal")),
+                  ],
+                );
+              });
+
+            }, icon: const Icon(Icons.delete, color: Colors.red,))
+                : const SizedBox(),
             ElevatedButton(style: const ButtonStyle(
                 backgroundColor: MaterialStatePropertyAll(Colors.green)
             ),onPressed: (){
@@ -272,10 +325,8 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                     };
                     apiService.addFuelData(data: dataTemp).then((value) {
                       logger.i(value);
+                      Navigator.of(context).pop(true);
                       if (jsonDecode(value)["status"] == "SUCCESS") {
-                        Navigator.of(context).pop(true);
-                        Navigator.of(context).pop(true);
-                      }else{
                         Navigator.of(context).pop(true);
                       }
                     });

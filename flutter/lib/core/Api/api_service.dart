@@ -15,6 +15,7 @@ import 'package:VehiLoc/core/model/dashcamtype1.dart';
 class ApiService {
   final String baseUrl = "https://vehiloc.net/rest/";
   final String baseApiUrl = "https://vehiloc.net/api";
+  final String baseDevApiUrl = "https://dev.vehiloc.net/api";
   final String baseUrlDashcam = "https://dev.vehiloc.net/api/v1.0/live_stream";
   int timeoutDuration = 20000;
 
@@ -434,6 +435,86 @@ class ApiService {
     } catch (e) {
       logger.e('ERROR add fuel: $e');
       return 'ERROR add fuel';
+    }
+
+  }
+
+  Future<String> deleteServiceData({
+    required String serviceId}) async {
+    final String apiUrl = "$baseDevApiUrl/v1.0/delete_service?service_id=$serviceId";
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.delete(
+        Uri.parse(
+          apiUrl,
+        ),
+        // body: data.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&'),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+        },
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response delete service");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      logger.e('ERROR delete service: $e');
+      return 'ERROR delete service';
+    }
+
+  }
+
+  Future<String> deleteFuelData({
+    required String fuelId}) async {
+    final String apiUrl = "$baseDevApiUrl/v1.0/delete_fuel?fuel_id=$fuelId";
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.delete(
+        Uri.parse(
+          apiUrl,
+        ),
+        // body: data.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&'),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+        },
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response delete fuel");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      logger.e('ERROR delete fuel: $e');
+      return 'ERROR delete fuel';
     }
 
   }
