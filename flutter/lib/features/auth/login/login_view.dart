@@ -91,6 +91,8 @@ class _LoginViewState extends State<LoginView> {
           headers: {'Authorization': basicAuth},
         );
 
+        logger.i("response CustomerSalts");
+        logger.i(response.body);
         if (response.statusCode == 200) {
           prefs.setString('customerSalts', response.body);
           LoginState.userSalt = response.body;

@@ -69,6 +69,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
   bool _isTemperatureChartVisible = true;
   double? stopLatitude;
   double? stopLongitude;
+  int? selectedMarkerId;
 
   @override
   void initState() {
@@ -200,7 +201,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
         final int index = entry.key;
         final JdetailsItem detail = entry.value;
         return Marker(
-          markerId: MarkerId("${detail.startdt}-${detail.enddt}"),
+          markerId: MarkerId("${detail.enddt}"),
           position: LatLng(detail.lat, detail.lon),
           icon: BitmapDescriptor.defaultMarker,
           infoWindow: InfoWindow(
@@ -209,6 +210,8 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
           ),
         );
       }).toList();
+      logger.d("stop markers");
+      logger.i(stopMarkers);
 
       markers.addAll(stopMarkers);
     }
@@ -562,11 +565,15 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                     NarationWidget(
                       narationData: detailsItem,
                       fetchNarationData: () => fetchNarationData(),
-                      onMapButtonPressed: (double lat, double lon) {
+                      onMapButtonPressed: (double lat, double lon, int enddt) {
+                        logger.d("marker id");
+                        logger.i(enddt);
+                        logger.i(stopMarkers);
                         setState(() {
                           stopLatitude = lat;
                           stopLongitude = lon;
                           _tabController.animateTo(0);
+                         selectedMarkerId = enddt;
                         });
                       },
                       stopNumber: stopNumber,
@@ -631,6 +638,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                         onMapCreated: (controller) {
                           setState(() {
                             _mapController = controller;
+
                           });
                           if (stopLatitude != null && stopLongitude != null) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -640,6 +648,8 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                                   14,
                                 ), animationDuration: const Duration(milliseconds: 2000)
                               );
+                              _mapController.showMarkerInfoWindow(MarkerId(selectedMarkerId.toString()));
+
                             });
                           } else if (stopLatitude == null && stopLongitude == null) {
                             WidgetsBinding.instance.addPostFrameCallback((_) {

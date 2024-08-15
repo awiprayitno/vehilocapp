@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:VehiLoc/core/model/response_daily.dart';
 import 'package:VehiLoc/core/utils/naration_func.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class NarationWidget extends StatefulWidget {
   final ApiService apiService = ApiService();
   final List<JdetailsItem> narationData;
   final Future<List<JdetailsItem>> Function() fetchNarationData;
-  final void Function(double lat, double lon)? onMapButtonPressed;
+  final void Function(double lat, double lon, int enddt)? onMapButtonPressed;
   int stopNumber;
 
   NarationWidget({
@@ -169,7 +170,7 @@ class _NarationWidgetState extends State<NarationWidget> with SingleTickerProvid
                                         ),
                                         IconButton(
                                           onPressed: () {
-                                            widget.onMapButtonPressed?.call(jDetails.lat, jDetails.lon);
+                                            widget.onMapButtonPressed?.call(jDetails.lat, jDetails.lon,jDetails.enddt);
                                           },
                                           icon: Stack(
                                             children: [

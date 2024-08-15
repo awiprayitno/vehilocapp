@@ -48,6 +48,10 @@ class WebSocketProvider {
 
     List<dynamic> jsonRaw = json.decode(LoginState.userSalt);
     var saltFragment = jsonRaw.join(",");
+    logger.i("salt fragment");
+    logger.i(LoginState.userSalt);
+    logger.i(saltFragment);
+    logger.i(jsonRaw);
     channel = WebSocketChannel.connect(
       Uri.parse('wss://vehiloc.net/sub-split/$saltFragment'),
     );

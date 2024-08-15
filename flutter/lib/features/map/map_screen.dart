@@ -73,7 +73,6 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
 
   void realtimeHandler(Vehicle vehicle) {
     m.clear();
-    logger.i("realtime data");
     if (vehicle.lat != 0.0 && vehicle.lon != 0.0) {
       for (var current in _allVehicles) {
         if (current.vehicleId == vehicle.vehicleId) {
@@ -89,9 +88,6 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
 
 
   void setMarkers(bool isRealtime){
-
-    logger.i("setMarker");
-    logger.i(_allVehicles.length);
     for(Vehicle vehicle in _allVehicles) {
       BitmapDescriptor markerIcon;
       DateTime? gpsdtWIB;
@@ -159,7 +155,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   Future<List<Vehicle>> fetchAllData() async {
 
     try {
-      final List<Vehicle> vehicles = await apiService.fetchVehicles();
+      final List<Vehicle> vehicles = await apiService.fetchAllVehicles();
       // Filter out vehicles with lat and lon equal to 0.0
       final List<Vehicle> validVehicles = vehicles.where((vehicle) => vehicle.lat != 0.0 && vehicle.lon != 0.0).toList();
       return validVehicles;

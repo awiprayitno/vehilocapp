@@ -7,7 +7,7 @@ class ApiProvider extends ChangeNotifier {
   late Future<List<Vehicle>> _apiResponse;
 
   Future<List<Vehicle>> getApiResponse() {
-    _apiResponse = _apiService.fetchVehicles();
+    _apiResponse = _apiService.fetchAllVehicles();
     return _apiResponse;
   }
 }

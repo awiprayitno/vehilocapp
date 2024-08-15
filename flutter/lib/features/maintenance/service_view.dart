@@ -95,7 +95,7 @@ class _ServiceViewState extends ConsumerState<ServiceView> {
 
   Future<List<Vehicle>> fetchAllData() async {
     try {
-      final List<Vehicle> vehicles = await apiService.fetchVehicles();
+      final List<Vehicle> vehicles = await apiService.fetchAllVehicles();
       final List<Vehicle> validVehicles = vehicles.where((vehicle) => vehicle.lat != 0.0 && vehicle.lon != 0.0 && vehicle.vehicleId != null).toList();
       return validVehicles;
     } catch (e) {
