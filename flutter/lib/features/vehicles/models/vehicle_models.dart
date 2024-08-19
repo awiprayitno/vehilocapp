@@ -9,10 +9,10 @@ class SelectedCustomerModels {
   void addSelectedCustomer(Map selectedCustomer) {
     customer.add(selectedCustomer);
   }
-  void removSelectedCustomer(Map customerData){
+  void removeSelectedCustomer(Map customerData){
     customer.removeWhere((element)=>
-      element["customer_name"] == customerData["customer_name"]);
+      element == customerData["customer_id"]);
   }
 }
 
-final selectedCustomerProvider = StateProvider<SelectedCustomerModels>((ref) => SelectedCustomerModels());
+final selectedCustomerProvider = StateProvider<List<Map>>((ref) => []);

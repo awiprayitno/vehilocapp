@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:VehiLoc/core/Api/websocket.dart';
+import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,10 +20,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:label_marker/label_marker.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
-  double? lat;
-  double? lon;
+  // double? lat;
+  // double? lon;
 
-  MapScreen({super.key, this.lat, this.lon});
+  MapScreen({super.key});
   static Function? globalSetState;
 
   @override 
@@ -36,9 +37,9 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   late BitmapDescriptor redMarkerIcon;
   late BitmapDescriptor greyMarkerIcon;
   final ApiService apiService = ApiService();
-  late Future<List<Geofences>> _fetchGeofences;
-  late Future<List<Vehicle>> _fetchDataAndGeofences;
-  late List<Vehicle> _allVehicles;
+  Future<List<Geofences>>? _fetchGeofences;
+  Future<List<Vehicle>>? _fetchDataAndGeofences;
+  List<Vehicle> _allVehicles = [];
   bool switchGeofences = false;
   bool switchCurrentLocation = false;
   bool geofencesEnabled = false;
@@ -53,22 +54,21 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
 
   @override
   void initState() {
-    logger.i("init state");
     super.initState();
     setMarkerIcons();
-    _fetchGeofences = fetchGeofencesData();
-    _fetchDataAndGeofences = fetchAllData();
-    _allVehicles = [];
-    WebSocketProvider.subscribe(realtimeHandler);
-    lat = widget.lat;
-    lon = widget.lon;
-    MapScreen.globalSetState = (double? lat, double?lon){
-      setState(() {
-        this.lat = lat;
-        this.lon = lon;
-        _googleMapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat!, lon!), 16), animationDuration: const Duration(milliseconds: 2000));
-      });
-    };
+    // _fetchGeofences = fetchGeofencesData();
+    // _fetchDataAndGeofences = fetchAllData();
+    // _allVehicles = [];
+    // WebSocketProvider.subscribe(realtimeHandler);
+    // lat = widget.lat;
+    // lon = widget.lon;
+    // MapScreen.globalSetState = (double? lat, double?lon){
+    //   setState(() {
+    //     this.lat = lat;
+    //     this.lon = lon;
+    //     _googleMapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat!, lon!), 16), animationDuration: const Duration(milliseconds: 2000));
+    //   });
+    // };
   }
 
   void realtimeHandler(Vehicle vehicle) {
@@ -243,287 +243,310 @@ void _resetCameraPosition() {
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if(m.isEmpty){
+    if (m.isEmpty) {
       setMarkers(realtime);
     }
+    LatLngBounds bounds =_allVehicles.isEmpty ? LatLngBounds(southwest: LatLng(-8.199279, 117.034681) , northeast: LatLng(-1.121042, 106.050408)): _getBounds(_allVehicles);
+    //LatLng center = LatLng((bounds.southwest.latitude + bounds.northeast.latitude) / 2,(bounds.southwest.longitude + bounds.northeast.longitude) / 2);
+
+    LatLng center = LatLng(-4.942975, 111.157745);
+    //double zoomLevel = _calculateZoomLevel(bounds);
+    double zoomLevel = 7;
+
+    double widthZoom = _calculateZoomLevel(LatLngBounds(
+      southwest: LatLng(bounds.southwest.latitude, bounds.southwest.longitude),
+      northeast: LatLng(bounds.southwest.latitude, bounds.northeast.longitude),
+    ));
+    double heightZoom = _calculateZoomLevel(LatLngBounds(
+      southwest: LatLng(bounds.southwest.latitude, bounds.southwest.longitude),
+      northeast: LatLng(bounds.northeast.latitude, bounds.southwest.longitude),
+    ));
+
+    logger.i("selected customer");
+    logger.i(ref.watch(selectedCustomerProvider));
+
+    //zoomLevel = max(zoomLevel, max(widthZoom, heightZoom));
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Map',
-          style: GoogleFonts.poppins(
-            color: GlobalColor.textColor,
-          ),
-        ),
-        backgroundColor: GlobalColor.mainColor,
-        actions: [
-          FutureBuilder<List<Geofences>>(
-            future: _fetchGeofences,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container();
-              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                return Row(children: [
-                  const Text("Geofence ", style: TextStyle(fontSize: 16, color: Colors.white),),
-                  SizedBox(
-                  width: 51.0,
-                  height: 31.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: CupertinoSwitch(
-                      value: switchGeofences,
-                      onChanged: (newValue) {
-                        setState(() {
-                          switchGeofences = newValue;
-                          geofencesEnabled = newValue;
-                          final snackBarMessage = SnackBar(
-                            content: Text(newValue ? 'Showing Geofences' : 'Hiding Geofences'),
-                            duration: const Duration(seconds: 2),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(snackBarMessage);
-                        });
-                      },
-                      activeColor: CupertinoColors.activeGreen,
-                    ),
-                  ),
-                )],);
-              } else {
-                return Container();
-              }
-            },
-          ),
-        FutureBuilder<List<Geofences>>(
-            future: _fetchGeofences,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container();
-              }else{
-                return  Row(children: [
-                  Container(
-                    margin : const EdgeInsets.only(left: 15,right: 5),
-                    child: const FaIcon(FontAwesomeIcons.info, size: 20, color: Colors.white,),),
-                  //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
-                  SizedBox(
-                    width: 51.0,
-                    height: 31.0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      child:
-                      CupertinoSwitch(
-                        value: !realtime,
-                        onChanged: (newValue) {
-                          setState(() {
-                            realtime = !newValue;
-                          });
-                          final snackBarMessage = SnackBar(
-                            content: Text(newValue ? 'Showing Details (Disabled Realtime)' : 'Hiding Details (Enabled Realtime)'),
-                            duration: const Duration(seconds: 3),
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(snackBarMessage);
-                          if(realtime){
-                            WebSocketProvider.subscribe(realtimeHandler);
-                          }else{
-                            try{
-                              setMarkers(realtime);
-                            }catch(e){
-                              logger.e(e);
-                            }
-                            WebSocketProvider.unsubscribe(realtimeHandler);
-                          }
-
-                        },
-                        activeColor: CupertinoColors.activeGreen,
-                      ),
-                    ),
-                  )],);
-              }
-            }),
-
-          TextButton(
-            onPressed: _zoomOutMap,
-            child: Text(
-              '[   ]',
-              style: TextStyle(
-                color: GlobalColor.textColor,
-                fontSize: 24.0,
-              ),
+        appBar: AppBar(
+          title: Text(
+            ref.watch(selectedCustomerProvider).toString(),
+            style: GoogleFonts.poppins(
+              color: GlobalColor.textColor,
             ),
           ),
-
-
-          // IconButton(
-          //   icon: Icon(Icons.more_vert, color: GlobalColor.textColor),
-          //   onPressed: _zoomOutMap,
-          // )
-          // Switch(
-          //   value: switchCurrentLocation,
-          //   onChanged: (newValue) {
-          //     setState(() {
-          //       switchCurrentLocation = newValue;
-          //       logger.w("huehue test");
-
-          //       _checkLocationPermission();
-          //     });
-          //   }
-          // )
-        ],
-      ),
-      body: FutureBuilder<List<Vehicle>>(
-        future: _fetchDataAndGeofences,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error : ${snapshot.error}'));
-          } else if (snapshot.data == null || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('No data available, please check your connection or refresh'),
-                  const SizedBox(height: 16),
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      _refreshNoData();
-                    },
-                  ),
-                ],
-              ),
-            );
-          } else {
-            _allVehicles = snapshot.data!;
-            LatLngBounds bounds = _getBounds(_allVehicles);
-            LatLng center = LatLng((bounds.southwest.latitude + bounds.northeast.latitude) / 2,(bounds.southwest.longitude + bounds.northeast.longitude) / 2);
-
-            double zoomLevel = _calculateZoomLevel(bounds);
-
-            double widthZoom = _calculateZoomLevel(LatLngBounds(
-              southwest: LatLng(bounds.southwest.latitude, bounds.southwest.longitude),
-              northeast: LatLng(bounds.southwest.latitude, bounds.northeast.longitude),
-            ));
-            double heightZoom = _calculateZoomLevel(LatLngBounds(
-              southwest: LatLng(bounds.southwest.latitude, bounds.southwest.longitude),
-              northeast: LatLng(bounds.northeast.latitude, bounds.southwest.longitude),
-            ));
-
-            zoomLevel = max(zoomLevel, max(widthZoom, heightZoom));
-
-            return FutureBuilder<List<Geofences>>(
+          backgroundColor: GlobalColor.mainColor,
+          actions: [
+            FutureBuilder<List<Geofences>>(
               future: _fetchGeofences,
-              builder: (context, geofenceSnapshot) {
-                if (geofenceSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (geofenceSnapshot.hasError) {
-                  return Center(
-                      child: Text('Error: ${geofenceSnapshot.error}'));
-                } else if (!geofenceSnapshot.hasData ||
-                    geofenceSnapshot.data!.isEmpty) {
-                  return GoogleMap(
-                    mapType: MapType.normal,
-                    initialCameraPosition: CameraPosition(
-                      target: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
-                          ? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
-                                   (_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
-                          : center,
-                      zoom: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
-                          ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
-                          : zoomLevel,
-                    ),
-                    markers: m,
-                    // Set<Marker>.from(
-                    //   _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
-                    //     BitmapDescriptor markerIcon;
-                    //     DateTime? gpsdtWIB;
-                    //
-                    //     if (vehicle.speed == 0) {
-                    //       markerIcon = redMarkerIcon;
-                    //     } else {
-                    //       markerIcon = greenMarkerIcon;
-                    //     }
-                    //
-                    //     if (vehicle.gpsdt != null) {
-                    //       DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
-                    //       gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
-                    //       DateTime now = DateTime.now();
-                    //       int differenceInDays = now.difference(gpsdtWIB).inDays;
-                    //
-                    //       if (differenceInDays > 7) {
-                    //         markerIcon = greyMarkerIcon;
-                    //       }
-                    //     }
-                    //
-                    //     return Marker(
-                    //       markerId: MarkerId('${vehicle.vehicleId}'),
-                    //       position: LatLng(vehicle.lat!, vehicle.lon!),
-                    //       icon: markerIcon,
-                    //       infoWindow: InfoWindow(
-                    //         title: ("${vehicle.name}"),
-                    //         snippet: ""
-                    //         //("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
-                    //       ),
-                    //       rotation: vehicle.bearing?.toDouble() ?? 0.0,
-                    //     );
-                    //   }),
-                    // ),
-                    myLocationEnabled: true,
-                    compassEnabled: true,
-                    zoomControlsEnabled: false,
-                    onMapCreated: (GoogleMapController controller) {
-                      _googleMapController = controller;
-                      if (_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)) {
-                        Future.delayed(const Duration(milliseconds: 1000), () {
-                          LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
-                          controller.animateCamera(
-                            CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000)
-                          );
-                        });
-                      }
-                    },
-                  );
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container();
+                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  return Row(children: [
+                    const Text("Geofence ",
+                      style: TextStyle(fontSize: 16, color: Colors.white),),
+                    SizedBox(
+                      width: 51.0,
+                      height: 31.0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        child: CupertinoSwitch(
+                          value: switchGeofences,
+                          onChanged: (newValue) {
+                            setState(() {
+                              switchGeofences = newValue;
+                              geofencesEnabled = newValue;
+                              final snackBarMessage = SnackBar(
+                                content: Text(newValue
+                                    ? 'Showing Geofences'
+                                    : 'Hiding Geofences'),
+                                duration: const Duration(seconds: 2),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  snackBarMessage);
+                            });
+                          },
+                          activeColor: CupertinoColors.activeGreen,
+                        ),
+                      ),
+                    )
+                  ],);
                 } else {
-                  List<Geofences> geofences = geofenceSnapshot.data!;
-                  return GoogleMap(
-                    mapType: MapType.normal,
-                    initialCameraPosition: CameraPosition(
-                      target: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
-                          ? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
-                                   (_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
-                          : center,
-                      zoom: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
-                          ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
-                          : zoomLevel,
-                    ),
-                    markers: m,
-                    polygons: _createGeofences(geofences),
-                    myLocationEnabled: true,
-                    compassEnabled: true,
-                    zoomControlsEnabled: false,
-                    onMapCreated: (GoogleMapController controller) {
-                      _googleMapController = controller;
-                      if (_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)) {
-                        Future.delayed(const Duration(milliseconds: 1000), () {
-                          LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
-                          controller.animateCamera(
-                            CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000)
-                          );
-                        });
-                      }
-                    },
-                  );
+                  return Container();
                 }
               },
-            );
-          }
-        },
-      ),
-    );
-  }
+            ),
+            FutureBuilder<List<Geofences>>(
+                future: _fetchGeofences,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Container();
+                  } else {
+                    return Row(children: [
+                      Container(
+                        margin: const EdgeInsets.only(left: 15, right: 5),
+                        child: const FaIcon(FontAwesomeIcons.info, size: 20,
+                          color: Colors.white,),),
+                      //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
+                      SizedBox(
+                        width: 51.0,
+                        height: 31.0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          child:
+                          CupertinoSwitch(
+                            value: !realtime,
+                            onChanged: (newValue) {
+                              setState(() {
+                                realtime = !newValue;
+                              });
+                              final snackBarMessage = SnackBar(
+                                content: Text(newValue
+                                    ? 'Showing Details (Disabled Realtime)'
+                                    : 'Hiding Details (Enabled Realtime)'),
+                                duration: const Duration(seconds: 3),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  snackBarMessage);
+                              if (realtime) {
+                                WebSocketProvider.subscribe(realtimeHandler);
+                              } else {
+                                try {
+                                  setMarkers(realtime);
+                                } catch (e) {
+                                  logger.e(e);
+                                }
+                                WebSocketProvider.unsubscribe(realtimeHandler);
+                              }
+                            },
+                            activeColor: CupertinoColors.activeGreen,
+                          ),
+                        ),
+                      )
+                    ],);
+                  }
+                }),
+
+            TextButton(
+              onPressed: _zoomOutMap,
+              child: Text(
+                '[   ]',
+                style: TextStyle(
+                  color: GlobalColor.textColor,
+                  fontSize: 24.0,
+                ),
+              ),
+            ),
+
+
+            // IconButton(
+            //   icon: Icon(Icons.more_vert, color: GlobalColor.textColor),
+            //   onPressed: _zoomOutMap,
+            // )
+            // Switch(
+            //   value: switchCurrentLocation,
+            //   onChanged: (newValue) {
+            //     setState(() {
+            //       switchCurrentLocation = newValue;
+            //       logger.w("huehue test");
+
+            //       _checkLocationPermission();
+            //     });
+            //   }
+            // )
+          ],
+        ),
+        body: GoogleMap(
+          mapType: MapType.normal,
+          initialCameraPosition: CameraPosition(
+            target:
+            //_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                //? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
+                //(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
+                center,
+            zoom:
+            //_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                //? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
+                 zoomLevel,
+          ),
+          markers: m,
+          //polygons: _createGeofences(geofences),
+          myLocationEnabled: true,
+          compassEnabled: true,
+          zoomControlsEnabled: false,
+          onMapCreated: (GoogleMapController controller) {
+            _googleMapController = controller;
+            if (_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)) {
+              Future.delayed(const Duration(milliseconds: 1000), () {
+                LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
+                controller.animateCamera(
+                    CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000)
+                );
+              });
+            }
+          },
+        ));}
+      //
+      // FutureBuilder<List<Vehicle>>(
+      //   future: _fetchDataAndGeofences,
+      //   builder: (context, snapshot) {
+          // if (snapshot.connectionState == ConnectionState.waiting) {
+          //   return const Center(child: CircularProgressIndicator());
+          // } else if (snapshot.hasError) {
+          //   return Center(child: Text('Error : ${snapshot.error}'));
+          // }
+          // else
+          //   if (snapshot.data == null || snapshot.data!.isEmpty) {
+          //   return Center(
+          //     child: Column(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         const Text('No data available, please check your connection or refresh'),
+          //         const SizedBox(height: 16),
+          //         IconButton(
+          //           icon: const Icon(Icons.refresh),
+          //           onPressed: () {
+          //             _refreshNoData();
+          //           },
+          //         ),
+          //       ],
+          //     ),
+          //   );
+          // }
+            //else {
+            //_allVehicles = snapshot.data!;
+
+
+    //        FutureBuilder<List<Geofences>>(
+    //           future: _fetchGeofences,
+    //           builder: (context, geofenceSnapshot) {
+
+    //             if (geofenceSnapshot.connectionState == ConnectionState.waiting) {
+    //               return const Center(child: CircularProgressIndicator());
+    //             } else if (geofenceSnapshot.hasError) {
+    //               return Center(
+    //                   child: Text('Error: ${geofenceSnapshot.error}'));
+    //             } else if (!geofenceSnapshot.hasData ||
+    //                 geofenceSnapshot.data!.isEmpty) {
+    //               return
+    //                 GoogleMap(
+    //                 mapType: MapType.normal,
+    //                 initialCameraPosition: CameraPosition(
+    //                   target: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+    //                       ? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
+    //                                (_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
+    //                       : center,
+    //                   zoom: _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+    //                       ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
+    //                       : zoomLevel,
+    //                 ),
+    //                 markers: m,
+    //                 // Set<Marker>.from(
+    //                 //   _allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).map((vehicle) {
+    //                 //     BitmapDescriptor markerIcon;
+    //                 //     DateTime? gpsdtWIB;
+    //                 //
+    //                 //     if (vehicle.speed == 0) {
+    //                 //       markerIcon = redMarkerIcon;
+    //                 //     } else {
+    //                 //       markerIcon = greenMarkerIcon;
+    //                 //     }
+    //                 //
+    //                 //     if (vehicle.gpsdt != null) {
+    //                 //       DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
+    //                 //       gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
+    //                 //       DateTime now = DateTime.now();
+    //                 //       int differenceInDays = now.difference(gpsdtWIB).inDays;
+    //                 //
+    //                 //       if (differenceInDays > 7) {
+    //                 //         markerIcon = greyMarkerIcon;
+    //                 //       }
+    //                 //     }
+    //                 //
+    //                 //     return Marker(
+    //                 //       markerId: MarkerId('${vehicle.vehicleId}'),
+    //                 //       position: LatLng(vehicle.lat!, vehicle.lon!),
+    //                 //       icon: markerIcon,
+    //                 //       infoWindow: InfoWindow(
+    //                 //         title: ("${vehicle.name}"),
+    //                 //         snippet: ""
+    //                 //         //("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.baseMcc! ~/ 10}°C"),
+    //                 //       ),
+    //                 //       rotation: vehicle.bearing?.toDouble() ?? 0.0,
+    //                 //     );
+    //                 //   }),
+    //                 // ),
+    //                 myLocationEnabled: true,
+    //                 compassEnabled: true,
+    //                 zoomControlsEnabled: false,
+    //                 onMapCreated: (GoogleMapController controller) {
+    //                   _googleMapController = controller;
+    //                   if (_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)) {
+    //                     Future.delayed(const Duration(milliseconds: 1000), () {
+    //                       LatLngBounds bounds = _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList());
+    //                       controller.animateCamera(
+    //                         CameraUpdate.newLatLngBounds(bounds, 20), animationDuration: const Duration(milliseconds: 2000)
+    //                       );
+    //                     });
+    //                   }
+    //                 },
+    //               );
+    //             } else {
+    //               List<Geofences> geofences = geofenceSnapshot.data!;
+    //               return
+    //             }
+    //           }
+    //       //}
+    //     //},
+    //   //),
+    // ));
+
 
   LatLngBounds _getBounds(List<Vehicle> vehicles) {
     List<LatLng> positions = vehicles.map((vehicle) {

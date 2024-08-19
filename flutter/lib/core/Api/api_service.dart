@@ -155,7 +155,51 @@ class ApiService {
       return [];
     }
   }
+  Future<List> searchVehicle(String q) async {
+    final String apiUrl = "$baseUrl/search?q=$q";
 
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+        return [];
+      }
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Authorization': basicAuth},
+      );
+
+      logger.i("response search");
+      logger.i(response.body);
+      logger.i(username);
+      logger.i(password);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = json.decode(response.body);
+        // final List<Vehicle> vehicles = jsonResponse
+        //     .map((vehicleJson) => Vehicle.fromJson(vehicleJson))
+        //     .cast<Vehicle>()
+        //     .toList();
+        logger.i("Search response: $jsonResponse");
+        return jsonResponse;
+      } else {
+        logger.e("API request failed with status code: ${response.statusCode}");
+        return [];
+      }
+    } catch (e, t) {
+      logger.e("Error during API request: $e");
+      logger.w(t);
+      return [];
+    }
+  }
 
   Future<Data> fetchDailyHistory(int vehicleId, int startEpoch) async {
     final String apiUrl =
