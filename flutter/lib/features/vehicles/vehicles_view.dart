@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
@@ -136,7 +137,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
     setState(() {
       _isLoading = true;
     });
-    int i = 0;
+
 
     final List customer = await apiService.fetchCustomers();
     if (mounted) {
@@ -144,11 +145,10 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
         _allCustomer = customer;
 
         if(_vehicleLoading.isEmpty){
-          for(var a in _allCustomer){
+          for(int i = 0; i< _allCustomer.length; i++){
             _vehicleLoading.add({i:false});
             _vehicleWidgets.add({i:[]});
             _customerController.add({i : ExpansionTileController()});
-            i++;
           }
         }
 
@@ -218,8 +218,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
         setState(() {
           _isLoading = true;
         });
-        int i = 0;
-        int s = 0;
+
         if (mounted) {
           List searchData = await apiService.searchVehicle(query);
 
@@ -235,20 +234,18 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
 
             if(_vehicleLoading.isEmpty){
-              for(var c in searchData){
-                List<Widget> vehicleWidgets = await onExpansionChanged(c["vehicles"]
+              for(int s =0; s < searchData.length; s++){
+                List<Widget> vehicleWidgets = await onExpansionChanged(searchData[s]["vehicles"]
                     .map((vehicleJson) => Vehicle.fromJson(vehicleJson))
                     .cast<Vehicle>()
                     .toList());
 
                 _vehicleWidgets.add({s: vehicleWidgets});
-                s++;
               }
-              for(var a in _allCustomer){
+              for(int i =0; i < _allCustomer.length; i++){
                 _vehicleLoading.add({i:false});
 
                 _customerController.add({i : ExpansionTileController()});
-                i++;
               }
             }
 
@@ -282,6 +279,11 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
       }
 
     });
+
+    logger.i("search result");
+    logger.i(_allCustomer.length);
+    logger.i(_vehicleLoading);
+    logger.i(_customerController);
 
   }
 
@@ -534,6 +536,29 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width / 2) -10,
+                      child: ElevatedButton(
+                          style:ButtonStyle(
+                              backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
+                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                  const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                      side: BorderSide(color: Colors.white)
+                                  )
+                              )
+                          ),
+                          onPressed: (){
+                            BottomBar.globalSetState?.call(vehicle.lat!, vehicle.lon!,);
+                          }, child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FaIcon(FontAwesomeIcons.magnifyingGlassLocation, color: Colors.white,),
+                            Text(" Map", style: TextStyle(color: Colors.white),)
+                          ]
+                      )),
+                    ),
                     SizedBox(
                       width: (MediaQuery.of(context).size.width / 2) -10,
                       child: ElevatedButton(
@@ -552,34 +577,12 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.book_online, color: Colors.white,),
-                              Text("Details", style: TextStyle(color: Colors.white),)
+                              FaIcon(FontAwesomeIcons.clockRotateLeft, color: Colors.white,),
+                              Text(" History", style: TextStyle(color: Colors.white),)
                             ],
                           )),
 
                     ),
-                    SizedBox(
-                      width: (MediaQuery.of(context).size.width / 2) -10,
-                      child: ElevatedButton(
-                          style:ButtonStyle(
-                              backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                  const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.zero,
-                                      side: BorderSide(color: Colors.white)
-                                  )
-                              )
-                          ),
-                          onPressed: (){
-                            BottomBar.globalSetState?.call(vehicle.lat!, vehicle.lon!,);
-                          }, child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.map_outlined, color: Colors.white,),
-                            Text("Map", style: TextStyle(color: Colors.white),)
-                          ]
-                      )),
-                    )
 
 
                   ],
@@ -651,21 +654,30 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                       controller: _customerController[index][index],
                       //initiallyExpanded: _allCustomer[index]["vehicles_count"] <= 6 ? true : false,
                       onExpansionChanged: (onExpand) async {
+                        try{
                         if(_vehicleWidgets[index][index]!.isEmpty){
                           setState(() {
                             _vehicleLoading[index][index] = true;
                           });
-                          await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]).then((value){
-                           onExpansionChanged(value).then((v){
-                              logger.i("done");
-                              _vehicleLoading[index][index] = false;
-                              _vehicleWidgets[index][index] = v;
-                              setState(() {
-                              });
+                          await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]).then((vehicles) async {
+                            await apiService.fetchGeofencesPerCustomer(_allCustomer[index]["id"]).then((geofences){
+                              onExpansionChanged(vehicles).then((v){
+                                _allCustomer[index]["vehicles"] = vehicles;
+                                _allCustomer[index]["geofences"] = geofences;
+                                logger.i("done");
+                                _vehicleLoading[index][index] = false;
+                                _vehicleWidgets[index][index] = v;
+                                setState(() {
+                                });
 
+                              });
                             });
                           });
 
+                        }
+                        }catch(e){
+                          logger.e("error ");
+                          logger.e(e);
                         }
 
                         logger.d("selected vehicle data");
@@ -674,7 +686,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
                         //logger.i(_groupedVehicles.keys.elementAt(index));
                         if(onExpand) {
-                          //_allCustomer[index]["vehicles"] =
+                          //_allCustomer[index]["vehicles"] = await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]);
                           ref.read(selectedCustomerProvider.notifier).update((state) {
                             return [...state, _allCustomer[index]];
                           });

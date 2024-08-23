@@ -32,10 +32,10 @@ class _BottomBarState extends State<BottomBar> {
   void initState() {
     super.initState();
     _controller = PersistentTabController(initialIndex: BottomBar.currentIndex);
-    //var mapScreen = MapScreen(lat: widget.lat, lon: widget.lon);
+    var mapScreen = MapScreen(lat: widget.lat, lon: widget.lon);
 
     _navScreens = [
-      MapScreen(),
+      mapScreen,
       const VehicleView(),
       const FuelServiceView(),
       const AccountView(),

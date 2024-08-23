@@ -276,6 +276,47 @@ class ApiService {
       return [];
     }
   }
+  Future<List<Geofences>> fetchGeofencesPerCustomer(int customerId) async {
+    final String apiUrl = "$baseUrl/geofences_per_customer";
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+        return [];
+      }
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Authorization': basicAuth},
+      );
+      logger.i("response fetch geofence per customer");
+      logger.i(response.body);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = json.decode(response.body);
+        final List<Geofences> geofences = jsonResponse
+            .map((geofenceJson) => Geofences.fromJson(geofenceJson))
+            .cast<Geofences>()
+            .toList();
+        logger.i("Geofences response: $jsonResponse");
+        return geofences;
+      } else {
+        logger.e("API request failed with status code: ${response.statusCode}");
+        return [];
+      }
+    } catch (e) {
+      logger.e("Error during API request: $e");
+      return [];
+    }
+  }
 
   Future<String> fetchAddress(double lat, double lon) async {
     final String apiUrl = "$baseUrl/address?lat=$lat&lon=$lon";

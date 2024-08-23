@@ -20,10 +20,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:label_marker/label_marker.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
-  // double? lat;
-  // double? lon;
+  double? lat;
+  double? lon;
 
-  MapScreen({super.key});
+  MapScreen({super.key, this.lat, this.lon});
   static Function? globalSetState;
 
   @override 
@@ -37,9 +37,10 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   late BitmapDescriptor redMarkerIcon;
   late BitmapDescriptor greyMarkerIcon;
   final ApiService apiService = ApiService();
-  Future<List<Geofences>>? _fetchGeofences;
+  List<Geofences> _fetchGeofences = [];
   Future<List<Vehicle>>? _fetchDataAndGeofences;
   List<Vehicle> _allVehicles = [];
+  List customerSalts = [];
   bool switchGeofences = false;
   bool switchCurrentLocation = false;
   bool geofencesEnabled = false;
@@ -62,16 +63,18 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
     // WebSocketProvider.subscribe(realtimeHandler);
     // lat = widget.lat;
     // lon = widget.lon;
-    // MapScreen.globalSetState = (double? lat, double?lon){
-    //   setState(() {
-    //     this.lat = lat;
-    //     this.lon = lon;
-    //     _googleMapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat!, lon!), 16), animationDuration: const Duration(milliseconds: 2000));
-    //   });
-    // };
+    MapScreen.globalSetState = (double? lat, double?lon){
+      setState(() {
+        this.lat = lat;
+        this.lon = lon;
+        _googleMapController.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat!, lon!), 16), animationDuration: const Duration(milliseconds: 2000));
+      });
+    };
   }
 
   void realtimeHandler(Vehicle vehicle) {
+    logger.i("realtimes");
+    logger.i(vehicle.vehicleId);
     m.clear();
     if (vehicle.lat != 0.0 && vehicle.lon != 0.0) {
       for (var current in _allVehicles) {
@@ -187,6 +190,10 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
       return {};
     }
 
+    if(geofencesList.isEmpty){
+      return {};
+    }
+
     Set<Polygon> polygons = {};
 
     for (int i = 0; i < geofencesList.length; i++) {
@@ -218,12 +225,12 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
     lon = null;
   }
 
-  void _refreshNoData() {
-    setState(() {
-      _fetchDataAndGeofences = fetchAllData();
-      _fetchGeofences = fetchGeofencesData();
-    });
-  }
+  // void _refreshNoData() {
+  //   setState(() {
+  //     _fetchDataAndGeofences = fetchAllData();
+  //     _fetchGeofences = fetchGeofencesData();
+  //   });
+  // }
 
 
 void _resetCameraPosition() {
@@ -246,12 +253,39 @@ void _resetCameraPosition() {
     if (m.isEmpty) {
       setMarkers(realtime);
     }
-    LatLngBounds bounds =_allVehicles.isEmpty ? LatLngBounds(southwest: LatLng(-8.199279, 117.034681) , northeast: LatLng(-1.121042, 106.050408)): _getBounds(_allVehicles);
-    //LatLng center = LatLng((bounds.southwest.latitude + bounds.northeast.latitude) / 2,(bounds.southwest.longitude + bounds.northeast.longitude) / 2);
+    ref.listen(selectedCustomerProvider, (previous, next) {
+      WebSocketProvider.unsubscribe(realtimeHandler).then((value){
+      _allVehicles.clear();
+      customerSalts.clear();
+      m.clear();
 
-    LatLng center = LatLng(-4.942975, 111.157745);
-    //double zoomLevel = _calculateZoomLevel(bounds);
-    double zoomLevel = 7;
+      if(ref.watch(selectedCustomerProvider).isNotEmpty){
+        for(var i in ref.watch(selectedCustomerProvider)){
+          //logger.i(i["salt"]);m
+          _fetchGeofences = _fetchGeofences + i["geofences"];
+          _allVehicles = _allVehicles + i["vehicles"];
+          customerSalts.add(i["salt"]);
+        }
+        WebSocketProvider.subscribe(realtimeHandler, customerSalts);
+      }
+
+      //logger.d(_allVehicles);
+      logger.i("data change");
+      logger.i(customerSalts);
+
+
+      });
+
+
+
+    });
+
+
+    //_allVehicles = ref.watch(selectedCustomerProvider)[0]["vehicles"];
+    LatLngBounds bounds =_allVehicles.isEmpty ? LatLngBounds(southwest: const LatLng(-8.199279, 117.034681) , northeast: const LatLng(-1.121042, 106.050408)): _getBounds(_allVehicles);
+    LatLng center = _allVehicles.isEmpty ? const LatLng(-4.942975, 111.157745):LatLng((bounds.southwest.latitude + bounds.northeast.latitude) / 2,(bounds.southwest.longitude + bounds.northeast.longitude) / 2);
+    double zoomLevel = _allVehicles.isEmpty ? 7 :_calculateZoomLevel(bounds);
+    // double zoomLevel = 7;
 
     double widthZoom = _calculateZoomLevel(LatLngBounds(
       southwest: LatLng(bounds.southwest.latitude, bounds.southwest.longitude),
@@ -269,20 +303,15 @@ void _resetCameraPosition() {
     return Scaffold(
         appBar: AppBar(
           title: Text(
-            ref.watch(selectedCustomerProvider).toString(),
+            "Map",
             style: GoogleFonts.poppins(
               color: GlobalColor.textColor,
             ),
           ),
           backgroundColor: GlobalColor.mainColor,
           actions: [
-            FutureBuilder<List<Geofences>>(
-              future: _fetchGeofences,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Container();
-                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  return Row(children: [
+            _fetchGeofences.isNotEmpty ?
+                 Row(children: [
                     const Text("Geofence ",
                       style: TextStyle(fontSize: 16, color: Colors.white),),
                     SizedBox(
@@ -313,65 +342,56 @@ void _resetCameraPosition() {
                         ),
                       ),
                     )
-                  ],);
-                } else {
-                  return Container();
-                }
-              },
-            ),
-            FutureBuilder<List<Geofences>>(
-                future: _fetchGeofences,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Container();
-                  } else {
-                    return Row(children: [
-                      Container(
-                        margin: const EdgeInsets.only(left: 15, right: 5),
-                        child: const FaIcon(FontAwesomeIcons.info, size: 20,
-                          color: Colors.white,),),
-                      //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
-                      SizedBox(
-                        width: 51.0,
-                        height: 31.0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(16.0),
-                          ),
-                          child:
-                          CupertinoSwitch(
-                            value: !realtime,
-                            onChanged: (newValue) {
-                              setState(() {
-                                realtime = !newValue;
-                              });
-                              final snackBarMessage = SnackBar(
-                                content: Text(newValue
-                                    ? 'Showing Details (Disabled Realtime)'
-                                    : 'Hiding Details (Enabled Realtime)'),
-                                duration: const Duration(seconds: 3),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  snackBarMessage);
-                              if (realtime) {
-                                WebSocketProvider.subscribe(realtimeHandler);
-                              } else {
-                                try {
-                                  setMarkers(realtime);
-                                } catch (e) {
-                                  logger.e(e);
-                                }
-                                WebSocketProvider.unsubscribe(realtimeHandler);
-                              }
-                            },
-                            activeColor: CupertinoColors.activeGreen,
-                          ),
-                        ),
-                      )
-                    ],);
-                  }
-                }),
+                  ],)
+            : const SizedBox(),
+
+            _allVehicles.isNotEmpty ?
+            Row(children: [
+              Container(
+                margin: const EdgeInsets.only(left: 15, right: 5),
+                child: const FaIcon(FontAwesomeIcons.info, size: 20,
+                  color: Colors.white,),),
+              //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
+              SizedBox(
+                width: 51.0,
+                height: 31.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey,
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child:
+                  CupertinoSwitch(
+                    value: !realtime,
+                    onChanged: (newValue) {
+                      setState(() {
+                        realtime = !newValue;
+                      });
+                      final snackBarMessage = SnackBar(
+                        content: Text(newValue
+                            ? 'Showing Details (Disabled Realtime)'
+                            : 'Hiding Details (Enabled Realtime)'),
+                        duration: const Duration(seconds: 3),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          snackBarMessage);
+                      if (realtime) {
+                        WebSocketProvider.subscribe(realtimeHandler, customerSalts);
+                      } else {
+                        try {
+                          setMarkers(realtime);
+                        } catch (e) {
+                          logger.e(e);
+                        }
+                        WebSocketProvider.unsubscribe(realtimeHandler);
+                      }
+                    },
+                    activeColor: CupertinoColors.activeGreen,
+                  ),
+                ),
+              )
+            ],)
+            :const SizedBox(),
 
             TextButton(
               onPressed: _zoomOutMap,
@@ -406,17 +426,17 @@ void _resetCameraPosition() {
           mapType: MapType.normal,
           initialCameraPosition: CameraPosition(
             target:
-            //_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
-                //? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
-                //(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
-                center,
+            _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                ? LatLng((_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.latitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.latitude) / 2,
+                (_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).southwest.longitude + _getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()).northeast.longitude) / 2)
+                :center,
             zoom:
-            //_allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
-                //? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
-                 zoomLevel,
+            _allVehicles.isNotEmpty && _allVehicles.any((vehicle) => vehicle.lat != null && vehicle.lon != null)
+                ? _calculateZoomLevel(_getBounds(_allVehicles.where((vehicle) => vehicle.lat != null && vehicle.lon != null).toList()))
+                 :zoomLevel,
           ),
           markers: m,
-          //polygons: _createGeofences(geofences),
+          polygons: _createGeofences(_fetchGeofences),
           myLocationEnabled: true,
           compassEnabled: true,
           zoomControlsEnabled: false,

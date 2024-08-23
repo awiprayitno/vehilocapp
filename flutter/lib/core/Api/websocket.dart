@@ -19,14 +19,20 @@ class WebSocketProvider {
   static WebSocketChannel? channel;
   static List<void Function(Vehicle)> subs = [];
 
-  static Future<void> subscribe(void Function(Vehicle) cb) async {
+  static Future<void> subscribe(void Function(Vehicle) cb, List customerSalts) async {
+    logger.d("customer salts");
+    logger.i(customerSalts);
     if (subs.isEmpty) {
-      connect();
+      try{
+      connect(customerSalts);
+      }catch(e){
+        logger.e(e);
+      }
     }
     subs.add(cb);
   }
 
-  static void unsubscribe(void Function(Vehicle) cb) {
+  static Future<void> unsubscribe(void Function(Vehicle) cb) async {
     subs.removeWhere((element) => element == cb);
 
     if (subs.isEmpty) {
@@ -40,23 +46,25 @@ class WebSocketProvider {
     logger.i("Disposing websocket");
   }
 
-  static void connect() {
+  static void connect(List customerSalts) {
     if (channel != null) {
       logger.w("Attempt reconnect on existing channel");
       return;
     }
 
-    List<dynamic> jsonRaw = json.decode(LoginState.userSalt);
-    var saltFragment = jsonRaw.join(",");
+    //List<dynamic> jsonRaw = json.decode(LoginState.userSalt);
+    var saltFragment = customerSalts.join(",");
     logger.i("salt fragment");
-    logger.i(LoginState.userSalt);
+    //logger.i(LoginState.userSalt);
     logger.i(saltFragment);
-    logger.i(jsonRaw);
+    logger.i(customerSalts);
     channel = WebSocketChannel.connect(
       Uri.parse('wss://vehiloc.net/sub-split/$saltFragment'),
     );
 
     channel?.stream.listen((event) {
+      logger.d("realtimes event");
+      logger.i(event);
       for (var sub in subs) {
         try {
           var vehicleRaw = json.decode(event);
