@@ -350,9 +350,9 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                         PopupMenuItem(
                           child: StatefulBuilder(
                             builder: (BuildContext context, StateSetter setState) {
-                              return Row(
-                                children: [
-                                  Checkbox(
+                              return
+                                  CheckboxListTile(
+                                    title: const Text('Track line'),
                                     value: _polylineOption,
                                     onChanged: (newValue) {
                                       setState(() {
@@ -360,20 +360,16 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                                         _updateMap();
                                       });
                                     },
-                                  ),
-                                  const SizedBox(width: 6), 
-                                  const Text('Track line'),
-                                ],
-                              );
-                            },
+                                  );
+                              },
                           ),
                         ),
                         PopupMenuItem(
                           child: StatefulBuilder(
                             builder: (BuildContext context, StateSetter setState) {
-                              return Row(
-                                children: [
-                                  Checkbox(
+                              return
+                                   CheckboxListTile(
+                                    title: const Text('Stop'),
                                     value: _stopMarkerOption,
                                     onChanged: (newValue) {
                                       setState(() {
@@ -381,11 +377,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                                         _updateMap();
                                       });
                                     },
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text('Stop'),
-                                ],
-                              );
+                                  );
                             },
                           ),
                         ),

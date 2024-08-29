@@ -480,7 +480,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: getSensorColor(sensor.status),
+                                      color: getSensorColor(sensor.bgColor?.toLowerCase()),
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     child: Text(
@@ -506,7 +506,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration:BoxDecoration(
-                                        color: getSensorColor(sensor.status),
+                                        color: getSensorColor(sensor.bgColor?.toLowerCase()),
                                         borderRadius: BorderRadius.circular(5),
                                       ),
                                       child: Text(
@@ -654,6 +654,9 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                       controller: _customerController[index][index],
                       //initiallyExpanded: _allCustomer[index]["vehicles_count"] <= 6 ? true : false,
                       onExpansionChanged: (onExpand) async {
+                        logger.i("expanded");
+                        logger.i(onExpand);
+                        logger.i(index);
                         try{
                         if(_vehicleWidgets[index][index]!.isEmpty){
                           setState(() {

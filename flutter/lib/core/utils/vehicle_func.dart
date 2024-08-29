@@ -16,8 +16,8 @@ Color getVehicleColor(int speed, int gpsdt) {
   }
 }
 
-Color getSensorColor(String? status) {
-  if (status == 'ON') {
+Color getSensorColor(String? statusColor) {
+  if (statusColor == 'green') {
     return Colors.green;
   } else {
     return Colors.red;

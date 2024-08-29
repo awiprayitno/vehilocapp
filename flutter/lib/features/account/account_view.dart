@@ -1,4 +1,6 @@
+import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
@@ -8,14 +10,14 @@ import 'package:VehiLoc/features/account/widget/button_logout.dart';
 import 'package:VehiLoc/core/Api/websocket.dart';
 import 'package:VehiLoc/features/account/widget/redirect.dart';
 
-class AccountView extends StatefulWidget {
+class AccountView extends ConsumerStatefulWidget {
   const AccountView({Key? key}) : super(key: key);
 
   @override
   _AccountViewState createState() => _AccountViewState();
 }
 
-class _AccountViewState extends State<AccountView> {
+class _AccountViewState extends ConsumerState<AccountView> {
   late String version = '';
   late String buildNumber = '';
 
@@ -93,6 +95,7 @@ class _AccountViewState extends State<AccountView> {
                                   ),
                                   TextButton(
                                     onPressed: () async {
+                                      ref.read(selectedCustomerProvider.notifier).state.clear();
                                       SharedPreferences prefs = await SharedPreferences.getInstance();
                                       String username = prefs.getString('username') ?? '';
                                       Navigator.of(context).pop(true);
