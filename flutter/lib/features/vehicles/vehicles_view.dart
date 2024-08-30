@@ -538,7 +538,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                   children: [
 
                     SizedBox(
-                      width: (MediaQuery.of(context).size.width / 2) -10,
+                      width: (MediaQuery.of(context).size.width / 3) -10,
                       child: ElevatedButton(
                           style:ButtonStyle(
                               backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
@@ -560,7 +560,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                       )),
                     ),
                     SizedBox(
-                      width: (MediaQuery.of(context).size.width / 2) -10,
+                      width: (MediaQuery.of(context).size.width / 3) -10,
                       child: ElevatedButton(
                           style:ButtonStyle(
                               backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
@@ -579,6 +579,31 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                             children: [
                               FaIcon(FontAwesomeIcons.clockRotateLeft, color: Colors.white,),
                               Text(" History", style: TextStyle(color: Colors.white),)
+                            ],
+                          )),
+
+                    ),
+
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width / 3) -10,
+                      child: ElevatedButton(
+                          style:ButtonStyle(
+                              backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
+                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                  const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                      side: BorderSide(color: Colors.white)
+                                  )
+                              )
+                          ),
+                          onPressed: (){
+                            apiService.sharedLinks(page: 1, perPage: 10, customerId: 2);
+                          },
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              FaIcon(FontAwesomeIcons.share, color: Colors.white,),
+                              Text(" Share", style: TextStyle(color: Colors.white),)
                             ],
                           )),
 
