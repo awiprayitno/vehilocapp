@@ -5,6 +5,7 @@ import 'package:VehiLoc/core/utils/colors.dart';
 import 'package:VehiLoc/core/utils/loading_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
@@ -205,6 +206,9 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "Harga tidak boleh kosong";

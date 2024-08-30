@@ -35,7 +35,7 @@ class _ServiceViewState extends ConsumerState<ServiceView> {
   List<DropdownMenuEntry> listVehicle = [];
   int? selectedVehicle;
   bool isLoad = true;
-  RefreshController _refreshController = RefreshController();
+  final RefreshController _refreshController = RefreshController();
   TextEditingController searchVehicleController = TextEditingController();
 
   Future<void> _fetchPage(int pageKey) async {

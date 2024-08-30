@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
@@ -159,6 +160,9 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "Km tidak boleh kosong";
@@ -234,6 +238,9 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "Duration tidak boleh kosong";
@@ -287,6 +294,9 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "Next Service KM tidak boleh kosong";
@@ -308,6 +318,9 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "SparePart  tidak boleh kosong";
@@ -329,6 +342,9 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "Service Cost tidak boleh kosong";
