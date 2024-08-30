@@ -618,7 +618,7 @@ class ApiService {
 
   Future<String> deleteServiceData({
     required String serviceId}) async {
-    final String apiUrl = "$baseDevApiUrl/v1.0/delete_service?service_id=$serviceId";
+    final String apiUrl = "$baseApiUrl/v1.0/delete_service?service_id=$serviceId";
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -658,7 +658,7 @@ class ApiService {
 
   Future<String> deleteFuelData({
     required String fuelId}) async {
-    final String apiUrl = "$baseDevApiUrl/v1.0/delete_fuel?fuel_id=$fuelId";
+    final String apiUrl = "$baseApiUrl/v1.0/delete_fuel?fuel_id=$fuelId";
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
