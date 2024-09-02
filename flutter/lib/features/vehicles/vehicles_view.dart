@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:VehiLoc/core/utils/loading_widget.dart';
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
 import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
+import 'package:VehiLoc/features/vehicles/share_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -584,31 +585,6 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
                     ),
 
-                    SizedBox(
-                      width: (MediaQuery.of(context).size.width / 3) -10,
-                      child: ElevatedButton(
-                          style:ButtonStyle(
-                              backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                  const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.zero,
-                                      side: BorderSide(color: Colors.white)
-                                  )
-                              )
-                          ),
-                          onPressed: (){
-                            apiService.sharedLinks(page: 1, perPage: 10, customerId: 2);
-                          },
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              FaIcon(FontAwesomeIcons.share, color: Colors.white,),
-                              Text(" Share", style: TextStyle(color: Colors.white),)
-                            ],
-                          )),
-
-                    ),
-
 
                   ],
                 ),
@@ -735,7 +711,19 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                       ),
                       child:Text("${_allCustomer[index]["vehicles_count"]} ", style: const TextStyle(
                         color: Colors.white
-                      ),),)],),
+                      ),),),
+                        const SizedBox(width: 10,),
+                        IconButton(onPressed: (){
+                          PersistentNavBarNavigator.pushNewScreen(
+                            context,
+                            screen: SharePageView(),
+                            withNavBar: false,
+                            pageTransitionAnimation: PageTransitionAnimation.fade,
+                          ).then((value){
+                          });
+                        }, icon:  const FaIcon(FontAwesomeIcons.share, color: Colors.black,),)
+
+                      ],),
                       
                       children: _vehicleLoading[index][index] ? [const CircularProgressIndicator()]:_vehicleWidgets[index][index]!
 
