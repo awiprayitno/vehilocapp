@@ -737,4 +737,46 @@ class ApiService {
 
   }
 
+  Future<String> deleteSharedLinks({
+    required int sharedLinkId,
+    required int customerId
+  }) async {
+    final String apiUrl = "$baseDevApiUrl/v1.0/delete_shared_link?shared_link_id=$sharedLinkId&customer_id=$customerId";
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.delete(
+        Uri.parse(
+          apiUrl,
+        ),
+        // body: data.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&'),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+        },
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response delete share link");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      logger.e('ERROR delete share link: $e');
+      return 'ERROR delete share link';
+    }
+
+  }
+
 }

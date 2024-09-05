@@ -716,7 +716,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                         IconButton(onPressed: (){
                           PersistentNavBarNavigator.pushNewScreen(
                             context,
-                            screen: SharePageView(),
+                            screen: SharePageView(customerId: _allCustomer[index]["id"],),
                             withNavBar: false,
                             pageTransitionAnimation: PageTransitionAnimation.fade,
                           ).then((value){
