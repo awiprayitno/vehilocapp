@@ -695,7 +695,7 @@ class ApiService {
     }
 
   }
-  Future<String> sharedLinks({
+  Future<String> getSharedLinks({
     required int page,
     required int perPage,
     required int customerId,
@@ -728,11 +728,60 @@ class ApiService {
           return http.Response("Timeout", 408); // Request Timeout response status code
         },
       );
-      logger.d("response shared links");
+      logger.d("response get shared links");
       logger.i(response.body);
       return response.body.toString();
     } catch (e) {
-      return 'ERROR shared links';
+      return 'ERROR get shared links';
+    }
+
+  }
+
+  Future<String> postSharedLinks({
+    required String vehicleId,
+    required int customerId,
+    required String startDt,
+    required String endDt,
+    required String note,
+
+
+  }) async {
+    final String apiUrl = "$baseDevApiUrl/v1.0/shared_links";
+    logger.i("post api url");
+    logger.i(apiUrl);
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+      }
+
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      var response = await http.post(
+        Uri.parse(
+          apiUrl,
+        ),
+        headers: {
+          HttpHeaders.authorizationHeader: basicAuth,
+          HttpHeaders.contentTypeHeader: "application/x-www-form-urlencoded"
+        },
+        body: "customer_id=$customerId&vehicle_id=$vehicleId&start_dt=$startDt&end_dt=$endDt&note=$note"
+      ).timeout(
+        Duration(milliseconds: timeoutDuration),
+        onTimeout: () {
+          return http.Response("Timeout", 408); // Request Timeout response status code
+        },
+      );
+      logger.d("response post shared links");
+      logger.i(response.body);
+      return response.body.toString();
+    } catch (e) {
+      return 'ERROR post shared links';
     }
 
   }
