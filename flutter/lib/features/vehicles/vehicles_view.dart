@@ -141,6 +141,11 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
       _isLoading = true;
     });
 
+    _allCustomer.clear();
+    _vehicleLoading.clear();
+    _vehicleWidgets.clear();
+    _customerController.clear();
+
 
     final List customer = await apiService.fetchCustomers();
     if (mounted) {
