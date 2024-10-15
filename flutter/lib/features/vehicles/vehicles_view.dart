@@ -140,8 +140,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
     setState(() {
       _isLoading = true;
     });
-
-    _allCustomer.clear();
+    ref.read(selectedCustomerProvider.notifier).state.clear();
     _vehicleLoading.clear();
     _vehicleWidgets.clear();
     _customerController.clear();
