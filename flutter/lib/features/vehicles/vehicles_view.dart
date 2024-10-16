@@ -19,6 +19,7 @@ import 'package:VehiLoc/features/vehicles/details_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:VehiLoc/core/Api/websocket.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
+import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
 
 class VehicleView extends ConsumerStatefulWidget {
   const VehicleView({Key? key}) : super(key: key);
@@ -31,7 +32,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   @override
   bool get wantKeepAlive => true;
   final ApiService apiService = ApiService();
-  late List _allCustomer;
+  List? _allCustomer;
   final List _vehicleLoading = [];
   final List <Map<int,List<Widget>>> _vehicleWidgets = [];
   bool _isLoading = false;
@@ -39,6 +40,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
   final List<Map<int, ExpansionTileController>> _customerController = [];
   TextEditingController searchController = TextEditingController();
+  RefreshController refreshController = RefreshController();
 
   // void realtimeHandler(Vehicle vehicle) {
   //   for (var current in _allVehicles) {
@@ -136,6 +138,19 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
     return address;
   }
 
+  void _onRefresh() async {
+    // monitor network fetch
+    _fetchData().then((value){
+      refreshController.refreshCompleted();
+    });
+
+
+  }
+
+  void _onLoading() async {
+    refreshController.loadComplete();
+  }
+
   Future<void> _fetchData() async {
     setState(() {
       _isLoading = true;
@@ -152,7 +167,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
         _allCustomer = customer;
 
         if(_vehicleLoading.isEmpty){
-          for(int i = 0; i< _allCustomer.length; i++){
+          for(int i = 0; i< _allCustomer!.length; i++){
             _vehicleLoading.add({i:false});
             _vehicleWidgets.add({i:[]});
             _customerController.add({i : ExpansionTileController()});
@@ -167,7 +182,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
       WidgetsBinding.instance
           .addPostFrameCallback((_){
-            _allCustomer.asMap().forEach((key, value) {
+            _allCustomer!.asMap().forEach((key, value) {
               logger.i("key value");
               if(value["vehicles_count"] <= 6){
                 _customerController[key][key]?.expand();
@@ -214,8 +229,9 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
     Future.delayed(const Duration(milliseconds: 500));
       logger.i(query);
+    ref.read(selectedCustomerProvider.notifier).state.clear();
 
-      _allCustomer.clear();
+      _allCustomer!.clear();
       _vehicleLoading.clear();
       _vehicleWidgets.clear();
       _customerController.clear();
@@ -230,7 +246,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           List searchData = await apiService.searchVehicle(query);
 
             for(var c in searchData){
-              _allCustomer.add({
+              _allCustomer!.add({
                 "id": c["id"],
                 "name" : c["name"],
                 "salt" : c["salt"],
@@ -249,7 +265,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
                 _vehicleWidgets.add({s: vehicleWidgets});
               }
-              for(int i =0; i < _allCustomer.length; i++){
+              for(int i =0; i < _allCustomer!.length; i++){
                 _vehicleLoading.add({i:false});
 
                 _customerController.add({i : ExpansionTileController()});
@@ -265,8 +281,8 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
           WidgetsBinding.instance
               .addPostFrameCallback((_){
-            for(int i =0; i < _allCustomer.length; i++){
-              if(_allCustomer[i]["vehicles_count"] <= 6){
+            for(int i =0; i < _allCustomer!.length; i++){
+              if(_allCustomer![i]["vehicles_count"] <= 6){
                 _customerController[i][i]?.expand();
 
               }
@@ -285,7 +301,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
     ;
 
     logger.i("search result");
-    logger.i(_allCustomer.length);
+    logger.i(_allCustomer!.length);
     logger.i(_vehicleLoading);
     logger.i(_customerController);
 
@@ -669,11 +685,90 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   }
 
   Widget _buildBody() {
-    return RefreshIndicator(
-      onRefresh: _fetchData,
+    List<Widget> customerWidgets = [];
+
+
+    if(!_isLoading){
+      _allCustomer!.asMap().forEach((index, value) {
+        customerWidgets.add( ExpansionTile(
+            controller: _customerController[index][index],
+            //initiallyExpanded: _allCustomer[index]["vehicles_count"] <= 6 ? true : false,
+            onExpansionChanged: (onExpand) async {
+              logger.i("expanded");
+              logger.i(onExpand);
+              logger.i(index);
+              try{
+                if(_vehicleWidgets[index][index]!.isEmpty){
+                  setState(() {
+                    _vehicleLoading[index][index] = true;
+                  });
+                  await apiService.fetchCustomerVehicles(_allCustomer![index]["id"]).then((vehicles) async {
+                    await apiService.fetchGeofencesPerCustomer(_allCustomer![index]["id"]).then((geofences){
+                      onExpansionChanged(vehicles).then((v){
+                        _allCustomer![index]["vehicles"] = vehicles;
+                        _allCustomer![index]["geofences"] = geofences;
+                        logger.i("done");
+                        _vehicleLoading[index][index] = false;
+                        _vehicleWidgets[index][index] = v;
+                        setState(() {
+                        });
+
+                      });
+                    });
+                  });
+
+                }
+              }catch(e){
+                logger.e("error ");
+                logger.e(e);
+              }
+
+              logger.d("selected vehicle data");
+
+              logger.i(_vehicleLoading);
+
+              //logger.i(_groupedVehicles.keys.elementAt(index));
+              if(onExpand) {
+                //_allCustomer[index]["vehicles"] = await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]);
+                ref.read(selectedCustomerProvider.notifier).update((state) {
+                  return [...state, _allCustomer![index]];
+                });
+              } else {
+                ref.read(selectedCustomerProvider.notifier).update((state) {
+                  return state.where((element) => element["id"] != _allCustomer![index]["id"]).toList();
+                });
+              }
+            },
+            title: Row(children: [
+              Text("${_allCustomer![index]["name"]} ", style: const TextStyle(
+                  fontWeight: FontWeight.bold),),
+              Container(
+                padding: const EdgeInsets.only(left: 3, right: 3, top: 1, bottom: 1),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    color: Colors.black
+                ),
+                child:Text("${_allCustomer![index]["vehicles_count"]} ", style: const TextStyle(
+                    color: Colors.white
+                ),),)],),
+
+            children: _vehicleLoading[index][index] ? [const CircularProgressIndicator()]:_vehicleWidgets[index][index]!
+
+        ),);
+      });
+    }
+
+
+
+    return SmartRefresher(
+    enablePullDown: true,
+      enablePullUp: false,
+      onRefresh: _onRefresh,
+      onLoading: _onLoading,
+      controller: refreshController,
       child: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _allCustomer.isEmpty
+          : _allCustomer!.isEmpty
           ? const Center(
         child: Text(
           "Tidak ada data",
@@ -682,90 +777,29 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           ),
         ),
       )
-
-          :ListView.builder(
-              itemCount: _allCustomer.length + (_isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-
-
-                if (_isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                // String customerName = _groupedVehicles.keys.elementAt(index);
-                // List<Vehicle> customerVehicles = _groupedVehicles[customerName]!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ExpansionTile(
-                      controller: _customerController[index][index],
-                      //initiallyExpanded: _allCustomer[index]["vehicles_count"] <= 6 ? true : false,
-                      onExpansionChanged: (onExpand) async {
-                        logger.i("expanded");
-                        logger.i(onExpand);
-                        logger.i(index);
-                        try{
-                        if(_vehicleWidgets[index][index]!.isEmpty){
-                          setState(() {
-                            _vehicleLoading[index][index] = true;
-                          });
-                          await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]).then((vehicles) async {
-                            await apiService.fetchGeofencesPerCustomer(_allCustomer[index]["id"]).then((geofences){
-                              onExpansionChanged(vehicles).then((v){
-                                _allCustomer[index]["vehicles"] = vehicles;
-                                _allCustomer[index]["geofences"] = geofences;
-                                logger.i("done");
-                                _vehicleLoading[index][index] = false;
-                                _vehicleWidgets[index][index] = v;
-                                setState(() {
-                                });
-
-                              });
-                            });
-                          });
-
-                        }
-                        }catch(e){
-                          logger.e("error ");
-                          logger.e(e);
-                        }
-
-                        logger.d("selected vehicle data");
-
-                        logger.i(_vehicleLoading);
-
-                        //logger.i(_groupedVehicles.keys.elementAt(index));
-                        if(onExpand) {
-                          //_allCustomer[index]["vehicles"] = await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]);
-                          ref.read(selectedCustomerProvider.notifier).update((state) {
-                            return [...state, _allCustomer[index]];
-                          });
-                        } else {
-                          ref.read(selectedCustomerProvider.notifier).update((state) {
-                            return state.where((element) => element["id"] != _allCustomer[index]["id"]).toList();
-                          });
-                        }
-                      },
-                      title: Row(children: [
-                        Text("${_allCustomer[index]["name"]} ", style: const TextStyle(
-                            fontWeight: FontWeight.bold),),
-                        Container(
-                      padding: const EdgeInsets.only(left: 3, right: 3, top: 1, bottom: 1),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: Colors.black
-                      ),
-                      child:Text("${_allCustomer[index]["vehicles_count"]} ", style: const TextStyle(
-                        color: Colors.white
-                      ),),)],),
-                      
-                      children: _vehicleLoading[index][index] ? [const CircularProgressIndicator()]:_vehicleWidgets[index][index]!
-
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                );
-              },
+          :
+          SingleChildScrollView(
+            child:
+            Column(
+              children: customerWidgets,
             ),
+          )
+      // ListView.builder(
+      //         itemCount: _allCustomer.length + (_isLoading ? 1 : 0),
+      //         itemBuilder: (context, index) {
+      //
+      //
+      //           if (_isLoading) {
+      //             return const Center(child: CircularProgressIndicator());
+      //           }
+      //           // String customerName = _groupedVehicles.keys.elementAt(index);
+      //           // List<Vehicle> customerVehicles = _groupedVehicles[customerName]!;
+      //           return Column(
+      //             crossAxisAlignment: CrossAxisAlignment.start,
+      //             children: customerWidget,
+      //           );
+      //         },
+      //       ),
     );
   }
 }
