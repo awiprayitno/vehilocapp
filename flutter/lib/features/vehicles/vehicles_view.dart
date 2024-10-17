@@ -227,7 +227,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
   Future<void> onSearch(String query) async {
 
-    Future.delayed(const Duration(milliseconds: 500));
+    //Future.delayed(const Duration(milliseconds: 500));
       logger.i(query);
     ref.read(selectedCustomerProvider.notifier).state.clear();
 
@@ -297,13 +297,6 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           _isLoading = false;
         });
       }
-
-    ;
-
-    logger.i("search result");
-    logger.i(_allCustomer!.length);
-    logger.i(_vehicleLoading);
-    logger.i(_customerController);
 
   }
 
@@ -730,6 +723,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
               //logger.i(_groupedVehicles.keys.elementAt(index));
               if(onExpand) {
                 //_allCustomer[index]["vehicles"] = await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]);
+
                 ref.read(selectedCustomerProvider.notifier).update((state) {
                   return [...state, _allCustomer![index]];
                 });
