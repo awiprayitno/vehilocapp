@@ -19,7 +19,7 @@ import 'package:VehiLoc/features/vehicles/details_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:VehiLoc/core/Api/websocket.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
-import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class VehicleView extends ConsumerStatefulWidget {
   const VehicleView({Key? key}) : super(key: key);
