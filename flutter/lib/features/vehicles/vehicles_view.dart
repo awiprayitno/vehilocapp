@@ -245,12 +245,20 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
         if (mounted) {
           List searchData = await apiService.searchVehicle(query);
 
+
+
+
+
             for(var c in searchData){
+              List<Vehicle> vehicles = c["vehicles"].map((vehicleJson) => Vehicle.fromJson(vehicleJson))
+                  .cast<Vehicle>()
+                  .toList();
               _allCustomer!.add({
                 "id": c["id"],
                 "name" : c["name"],
                 "salt" : c["salt"],
-                "vehicles_count" : c["vehicles"].length
+                "vehicles_count" : c["vehicles"].length,
+                "vehicles" : vehicles,
               });
             }
 
@@ -722,6 +730,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
               //logger.i(_groupedVehicles.keys.elementAt(index));
               if(onExpand) {
+                logger.i("on expand");
                 //_allCustomer[index]["vehicles"] = await apiService.fetchCustomerVehicles(_allCustomer[index]["id"]);
 
                 ref.read(selectedCustomerProvider.notifier).update((state) {
