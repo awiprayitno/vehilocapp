@@ -56,6 +56,21 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_){
+      if(ref.watch(selectedCustomerProvider).isNotEmpty){
+        for(var i in ref.watch(selectedCustomerProvider)){
+          logger.d("selected customer");
+          logger.i(i);
+          _fetchGeofences = _fetchGeofences + (i["geofences"] ?? []);
+          _allVehicles = _allVehicles + i["vehicles"];
+          customerSalts.add(i["salt"]);
+        }
+        WebSocketProvider.subscribe(realtimeHandler, customerSalts);
+      }
+    });
+
+
     setMarkerIcons();
     // _fetchGeofences = fetchGeofencesData();
     // _fetchDataAndGeofences = fetchAllData();
@@ -253,6 +268,7 @@ void _resetCameraPosition() {
     if (m.isEmpty) {
       setMarkers(realtime);
     }
+
     ref.listen(selectedCustomerProvider, (previous, next) {
       logger.i("selected change");
       WebSocketProvider.unsubscribe(realtimeHandler).then((value){

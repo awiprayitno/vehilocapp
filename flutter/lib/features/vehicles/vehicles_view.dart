@@ -42,18 +42,6 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   TextEditingController searchController = TextEditingController();
   RefreshController refreshController = RefreshController();
 
-  // void realtimeHandler(Vehicle vehicle) {
-  //   for (var current in _allVehicles) {
-  //     if (current.vehicleId == vehicle.vehicleId) {
-  //       setState(() {
-  //         current.merge(vehicle);
-  //         // logger.i('WebSocket message vehicle: ${current.customerName} ${current.name}');
-  //       });
-  //       break;
-  //     }
-  //   }
-  // }
-
   @override
   void initState() {
     super.initState();
@@ -194,7 +182,13 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
               //logger.i(_allCustomer);
               logger.i(key);
               logger.i(value);
+              ref.read(selectedCustomerProvider.notifier).update((state) {
+                return [...state, _allCustomer![key]];
+              });
             });
+
+
+
 
       });
     }
@@ -619,8 +613,8 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                FaIcon(FontAwesomeIcons.clockRotateLeft, color: Colors.white,),
-                                Text(" History", style: TextStyle(color: Colors.white),)
+                                FaIcon(FontAwesomeIcons.info, color: Colors.white,),
+                                Text(" Details", style: TextStyle(color: Colors.white),)
                               ],
                             )),
 

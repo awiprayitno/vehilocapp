@@ -20,8 +20,7 @@ class WebSocketProvider {
   static List<void Function(Vehicle)> subs = [];
 
   static Future<void> subscribe(void Function(Vehicle) cb, List customerSalts) async {
-    logger.d("customer salts");
-    logger.i(customerSalts);
+    logger.i('WebSocket start');
     if (subs.isEmpty) {
       try{
       connect(customerSalts);
