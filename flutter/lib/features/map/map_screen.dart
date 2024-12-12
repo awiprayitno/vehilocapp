@@ -254,6 +254,7 @@ void _resetCameraPosition() {
       setMarkers(realtime);
     }
     ref.listen(selectedCustomerProvider, (previous, next) {
+      logger.i("selected change");
       WebSocketProvider.unsubscribe(realtimeHandler).then((value){
       _allVehicles.clear();
       customerSalts.clear();
@@ -261,8 +262,9 @@ void _resetCameraPosition() {
 
       if(ref.watch(selectedCustomerProvider).isNotEmpty){
         for(var i in ref.watch(selectedCustomerProvider)){
-          //logger.i(i["salt"]);m
-          _fetchGeofences = _fetchGeofences + i["geofences"];
+          logger.d("selected customer");
+          logger.i(i);
+          _fetchGeofences = _fetchGeofences + (i["geofences"] ?? []);
           _allVehicles = _allVehicles + i["vehicles"];
           customerSalts.add(i["salt"]);
         }
