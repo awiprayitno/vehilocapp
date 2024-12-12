@@ -31,7 +31,7 @@ class _BottomBarState extends State<BottomBar> {
   @override
   void initState() {
     super.initState();
-    _controller = PersistentTabController(initialIndex: BottomBar.currentIndex);
+    _controller = PersistentTabController(initialIndex: 1);
     var mapScreen = MapScreen(lat: widget.lat, lon: widget.lon);
 
     _navScreens = [
