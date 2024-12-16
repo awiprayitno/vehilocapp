@@ -67,6 +67,8 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
       selectedDt = DateTime.fromMillisecondsSinceEpoch(
           widget.arguments["item"]["dt"] * 1000).toLocal();
 
+    }else{
+      dateTimeController.text = DateFormat("yyyy-MM-dd").format(DateTime.now());
     }
     vehicleId = widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"].toString():
     widget.arguments["selected_vehicle"].toString();

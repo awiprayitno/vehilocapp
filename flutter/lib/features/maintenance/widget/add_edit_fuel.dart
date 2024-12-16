@@ -70,6 +70,8 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
             widget.arguments["item"]["dt"] * 1000).toLocal());
         selectedDt = DateTime.fromMillisecondsSinceEpoch(
             widget.arguments["item"]["dt"] * 1000).toLocal();
+    }else{
+      dateTimeController.text = DateFormat("yyyy-MM-dd HH:mm").format(DateTime.now());
     }
 
     vehicleId = widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"].toString():
