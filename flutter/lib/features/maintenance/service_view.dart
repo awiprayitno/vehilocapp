@@ -203,6 +203,7 @@ class _ServiceViewState extends ConsumerState<ServiceView> {
                       onRefresh: _onRefresh,
                       onLoading: _onLoading,
                       child: PagedListView<int, dynamic>(
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                         addRepaintBoundaries: true,
                         cacheExtent: 10,
                         addSemanticIndexes: true,

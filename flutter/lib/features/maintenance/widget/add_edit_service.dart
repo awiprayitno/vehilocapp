@@ -101,7 +101,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
               Container(
                 margin: const EdgeInsets.only(top: 10),
                 child: DropdownMenu(
-
+                 enabled: widget.arguments["item"] == null,
                   initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]:
                   widget.arguments["selected_vehicle"],
                   menuHeight: MediaQuery.of(context).size.height -500,
@@ -152,7 +152,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                         readOnly: true,
                         decoration: InputDecoration(
                           isDense: true,
-                          labelText: "Date Time",
+                          labelText: "Date",
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
                           ),
@@ -334,7 +334,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           isDense: true,
-                          labelText: "Spare part Cost",
+                          labelText: "Sparepart Cost",
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(color: GlobalColor.mainColor, width: 1),
                           ),
@@ -387,6 +387,9 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                   title: const Text("Konfirmasi Hapus"),
                   content: const Text("Yakin ingin menghapus data?"),
                   actions: [
+                    ElevatedButton(onPressed: (){
+                      Navigator.of(c).pop();
+                    }, child: const Text("Batal")),
                     ElevatedButton(onPressed: () async {
                       Navigator.of(c).pop();
                       circularLoading(context);
@@ -425,9 +428,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                         }
                       });
                     }, child: const Text("Ya")),
-                    ElevatedButton(onPressed: (){
-                      Navigator.of(c).pop();
-                    }, child: const Text("Batal")),
+
                   ],
                 );
               });
@@ -435,48 +436,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
             }, icon: const Icon(Icons.delete, color: Colors.red,))
                 : const SizedBox(),
 
-            ElevatedButton(style: const ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll(Colors.green)
-            ),onPressed: (){
-              if(_formKey.currentState!.validate()){
-                circularLoading(context);
-                try{
-                  Map dataTemp = {};
-                  dataTemp = {
-                    "service_id" : widget.arguments["item"] == null ? "" : widget.arguments["item"]["id"].toString(),
-                    "vehicle_id" : vehicleId,
-                    "date" : dateTimeController.text,
-                    "km" : kmController.text.trim(),
-                    "next_service_date" : nextServiceDateController.text.trim(),
-                    "next_service_km" : nextServiceKmController.text.trim(),
-                    "duration" : durationController.text.trim(),
-                    "workshop" : workshopController.text.trim(),
-                    "title" : titleController.text.trim(),
-                    "sparepart_cost" : sparepartCostController.text.trim(),
-                    "service_cost" : serviceCostController.text.trim(),
-                    "description" : notesController.text.trim()
-                  };
-                  logger.i("data temp");
-                  logger.d(dataTemp);
-                  apiService.addServiceData(data: dataTemp).then((value) {
-                    logger.i(value);
-                    if (jsonDecode(value)["status"] == "SUCCESS") {
-                      Navigator.of(context).pop(true);
-                      Navigator.of(context).pop(true);
-                    }else{
-                      Navigator.of(context).pop(true);
-                    }
-                  });
-                }catch(e){
-                  Navigator.of(context).pop(true);
-                  logger.e("error edit fuel");
-                  logger.e(e);
-                }
-              }
 
-            }, child: Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
-                color: Colors.white
-            ))),
             // widget.arguments["item"] == null ?
             // ElevatedButton(style: const ButtonStyle(
             //     backgroundColor: MaterialStatePropertyAll(Colors.green)
@@ -534,13 +494,61 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
             //         style: TextStyle(
             //     color: Colors.white
             // ))) : const SizedBox(),
-            ElevatedButton(style: const ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll(Colors.red)
-            ),onPressed: (){
-              Navigator.of(context).pop(true);
-            }, child: const Text("Cancel", style: TextStyle(
-                color: Colors.white
-            ),)),
+            Row(
+              children: [
+                ElevatedButton(style: const ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Colors.red)
+                ),onPressed: (){
+                  Navigator.of(context).pop(true);
+                }, child: const Text("Cancel", style: TextStyle(
+                    color: Colors.white
+                ),)),
+                const SizedBox(width: 10,),
+                ElevatedButton(style: const ButtonStyle(
+                    backgroundColor: MaterialStatePropertyAll(Colors.green)
+                ),onPressed: (){
+                  if(_formKey.currentState!.validate()){
+                    circularLoading(context);
+                    try{
+                      Map dataTemp = {};
+                      dataTemp = {
+                        "service_id" : widget.arguments["item"] == null ? "" : widget.arguments["item"]["id"].toString(),
+                        "vehicle_id" : vehicleId,
+                        "date" : dateTimeController.text,
+                        "km" : kmController.text.trim(),
+                        "next_service_date" : nextServiceDateController.text.trim(),
+                        "next_service_km" : nextServiceKmController.text.trim(),
+                        "duration" : durationController.text.trim(),
+                        "workshop" : workshopController.text.trim(),
+                        "title" : titleController.text.trim(),
+                        "sparepart_cost" : sparepartCostController.text.trim(),
+                        "service_cost" : serviceCostController.text.trim(),
+                        "description" : notesController.text.trim()
+                      };
+                      logger.i("data temp");
+                      logger.d(dataTemp);
+                      apiService.addServiceData(data: dataTemp).then((value) {
+                        logger.i(value);
+                        if (jsonDecode(value)["status"] == "SUCCESS") {
+                          Navigator.of(context).pop(true);
+                          Navigator.of(context).pop(true);
+                        }else{
+                          Navigator.of(context).pop(true);
+                        }
+                      });
+                    }catch(e){
+                      Navigator.of(context).pop(true);
+                      logger.e("error edit fuel");
+                      logger.e(e);
+                    }
+                  }
+
+                }, child: Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
+                    color: Colors.white
+                ))),
+            ],),
+
+
 
           ],
         ),

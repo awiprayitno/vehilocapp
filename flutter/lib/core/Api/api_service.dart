@@ -225,7 +225,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        logger.i("Vehicle Daily Response: $jsonResponse");
+        logger.i("Vehicle Daily Response:");
+        logger.i(jsonResponse);
         return Data.fromJson(jsonResponse);
       } else {
         throw Exception('Failed to load data from API');

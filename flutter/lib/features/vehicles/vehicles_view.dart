@@ -590,7 +590,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                             }, child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              FaIcon(FontAwesomeIcons.magnifyingGlassLocation, color: Colors.white,),
+                              FaIcon(FontAwesomeIcons.magnifyingGlassLocation, color: Colors.white, size: 16,),
                               Text(" Map", style: TextStyle(color: Colors.white),)
                             ]
                         )),
@@ -613,7 +613,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                FaIcon(FontAwesomeIcons.info, color: Colors.white,),
+                                FaIcon(FontAwesomeIcons.info, color: Colors.white, size: 16,),
                                 Text(" Details", style: TextStyle(color: Colors.white),)
                               ],
                             )),
