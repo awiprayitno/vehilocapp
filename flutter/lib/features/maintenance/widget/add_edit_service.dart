@@ -53,12 +53,12 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
     }
     if(widget.arguments["item"] != null){
       kmController.text = widget.arguments["item"]["km"].toString();
-      titleController.text =  widget.arguments["item"]["title"];
-      workshopController.text = widget.arguments["item"]["workshop"];
-      notesController.text = widget.arguments["item"]["description"];
+      titleController.text =  widget.arguments["item"]["title"] ?? "";
+      workshopController.text = widget.arguments["item"]["workshop"] ?? "";
+      notesController.text = widget.arguments["item"]["description"] ?? "";
       durationController.text = widget.arguments["item"]["days"].toString();
-      nextServiceDateController.text = DateFormat("yyyy-MM-dd").format(DateTime.fromMillisecondsSinceEpoch(
-          widget.arguments["item"]["next_service_dt"] * 1000).toLocal());
+      nextServiceDateController.text = widget.arguments["item"]["next_service_dt"] != null ?DateFormat("yyyy-MM-dd").format(DateTime.fromMillisecondsSinceEpoch(
+          widget.arguments["item"]["next_service_dt"] * 1000).toLocal()) : "";
       nextServiceKmController.text = widget.arguments["item"]["next_service_km"].toString();
       sparepartCostController.text = widget.arguments["item"]["sparepart_cost"].toString();
       serviceCostController.text = widget.arguments["item"]["service_cost"].toString();

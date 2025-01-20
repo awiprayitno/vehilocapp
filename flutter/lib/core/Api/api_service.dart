@@ -531,7 +531,7 @@ class ApiService {
     required int vehicleIds,
 
   }) async {
-    final String apiUrl = "$baseApiUrl/v1.0/fuels?vehicle_ids=[$vehicleIds]&page=$page&per_page=$perPage";
+    final String apiUrl = "$baseDevApiUrl/v1.0/fuels?vehicle_ids=[$vehicleIds]&page=$page&per_page=$perPage";
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -577,7 +577,7 @@ class ApiService {
     required int vehicleIds,
 
   }) async {
-    final String apiUrl = "$baseApiUrl/v1.0/services?vehicle_ids=[$vehicleIds]&page=$page&per_page=$perPage";
+    final String apiUrl = "$baseDevApiUrl/v1.0/services?vehicle_ids=[$vehicleIds]&page=$page&per_page=$perPage";
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
