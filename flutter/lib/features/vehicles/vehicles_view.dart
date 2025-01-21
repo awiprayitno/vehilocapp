@@ -657,6 +657,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           title: TextField(
             controller: searchController,
             onEditingComplete: (){
+              FocusManager.instance.primaryFocus?.unfocus();
               onSearch(searchController.text);
             },
             //onChanged: onSearch,
@@ -669,6 +670,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           ),
           actions: [
             IconButton(onPressed: (){
+              FocusManager.instance.primaryFocus?.unfocus();
               onSearch(searchController.text);
             }, icon: const Icon(Icons.search), color: Colors.white,)
           ],

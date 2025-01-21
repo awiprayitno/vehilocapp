@@ -543,7 +543,7 @@ class _AddEditServiceState extends ConsumerState<AddEditService> {
                     }
                   }
 
-                }, child: Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
+                }, child: const Text("Save", style: TextStyle(
                     color: Colors.white
                 ))),
             ],),

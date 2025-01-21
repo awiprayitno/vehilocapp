@@ -380,7 +380,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                     logger.e(e);
                   }
                 }
-              }, child:  Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
+              }, child:  const Text("Save", style: TextStyle(
                   color: Colors.white
               ))),
             ],)
