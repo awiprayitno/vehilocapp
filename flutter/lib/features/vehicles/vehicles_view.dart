@@ -173,13 +173,13 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           .addPostFrameCallback((_){
             _allCustomer!.asMap().forEach((key, value) {
               // logger.i("key value");
-              // if(_allCustomer!.length <=  6){
-              //   _customerController[key][key]?.expand();
-              //   apiService.fetchCustomerVehicles(value["id"]).then((value){
-              //     onExpansionChanged(value);
-              //   });
-              //
-              // }
+              if(_allCustomer!.length <=  6){
+                _customerController[key][key]?.expand();
+                apiService.fetchCustomerVehicles(value["id"]).then((value){
+                  onExpansionChanged(value);
+                });
+
+              }
               // //logger.i(_allCustomer);
               // logger.i(key);
               // logger.i(value);

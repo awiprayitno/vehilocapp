@@ -1,7 +1,7 @@
 name: VehiLoc
 description: "Cara mudah tracking kemana saja armada Anda pergi."
 publish_to: "none"
-version: 2.0.7+19
+version: 2.0.8+20
 
 environment:
   sdk: ">=3.2.5 <4.0.0"
