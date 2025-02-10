@@ -44,8 +44,8 @@ class _BottomBarState extends State<BottomBar> {
 
     BottomBar.globalSetState = (double? lat, double? lon) {
       setState(() {
-        BottomBar.currentIndex = 1;
-        _controller.index = 1;
+        BottomBar.currentIndex = 0;
+        _controller.index = 0;
         MapScreen.globalSetState?.call(lat, lon);
       });
     };

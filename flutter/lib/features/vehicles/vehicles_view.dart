@@ -1,23 +1,20 @@
-import 'dart:convert';
 
-import 'package:VehiLoc/core/utils/loading_widget.dart';
+
+
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
 import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:VehiLoc/core/model/response_vehicles.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
 import 'package:VehiLoc/core/utils/vehicle_func.dart';
-import 'package:VehiLoc/core/Api/api_provider.dart';
+
 import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:VehiLoc/features/vehicles/details_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
-import 'package:VehiLoc/core/Api/websocket.dart';
+
 import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
@@ -128,9 +125,13 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
   void _onRefresh() async {
     // monitor network fetch
-    _fetchData().then((value){
-      refreshController.refreshCompleted();
-    });
+    if(searchController.text.isNotEmpty){
+      onSearch(searchController.text.trim());
+    }else{
+      _fetchData();
+    }
+
+    refreshController.refreshCompleted();
 
 
   }
@@ -171,17 +172,17 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
       WidgetsBinding.instance
           .addPostFrameCallback((_){
             _allCustomer!.asMap().forEach((key, value) {
-              logger.i("key value");
-              if(_allCustomer!.length <=  6){
-                _customerController[key][key]?.expand();
-                apiService.fetchCustomerVehicles(value["id"]).then((value){
-                  onExpansionChanged(value);
-                });
-
-              }
-              //logger.i(_allCustomer);
-              logger.i(key);
-              logger.i(value);
+              // logger.i("key value");
+              // if(_allCustomer!.length <=  6){
+              //   _customerController[key][key]?.expand();
+              //   apiService.fetchCustomerVehicles(value["id"]).then((value){
+              //     onExpansionChanged(value);
+              //   });
+              //
+              // }
+              // //logger.i(_allCustomer);
+              // logger.i(key);
+              // logger.i(value);
               ref.read(selectedCustomerProvider.notifier).update((state) {
                 return [...state, _allCustomer![key]];
               });
@@ -238,11 +239,6 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
         if (mounted) {
           List searchData = await apiService.searchVehicle(query);
-
-
-
-
-
             for(var c in searchData){
               List<Vehicle> vehicles = c["vehicles"].map((vehicleJson) => Vehicle.fromJson(vehicleJson))
                   .cast<Vehicle>()
@@ -281,17 +277,17 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             _isLoading = false;
           });
 
-          WidgetsBinding.instance
-              .addPostFrameCallback((_){
-            for(int i =0; i < _allCustomer!.length; i++){
-              if(_allCustomer![i]["vehicles_count"] <= 6){
-                _customerController[i][i]?.expand();
-
-              }
-            }
-
-
-          });
+          // WidgetsBinding.instance
+          //     .addPostFrameCallback((_){
+          //   for(int i =0; i < _allCustomer!.length; i++){
+          //     if(_allCustomer![i]["vehicles_count"] <= 6){
+          //       _customerController[i][i]?.expand();
+          //
+          //     }
+          //   }
+          //
+          //
+          // });
         }
 
 
@@ -633,13 +629,6 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
         );
       }
-
-
-
-
-
-
-
     return vehiclesWidget;
   }
 
@@ -658,7 +647,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             controller: searchController,
             onEditingComplete: (){
               FocusManager.instance.primaryFocus?.unfocus();
-              onSearch(searchController.text);
+              onSearch(searchController.text.trim());
             },
             //onChanged: onSearch,
             style: TextStyle(color: GlobalColor.textColor),
@@ -671,7 +660,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           actions: [
             IconButton(onPressed: (){
               FocusManager.instance.primaryFocus?.unfocus();
-              onSearch(searchController.text);
+              onSearch(searchController.text.trim());
             }, icon: const Icon(Icons.search), color: Colors.white,)
           ],
           backgroundColor: GlobalColor.mainColor,
@@ -741,13 +730,15 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             title: Row(children: [
               Text("${_allCustomer![index]["name"]} ", style: const TextStyle(
                   fontWeight: FontWeight.bold),),
+              searchController.text.trim().isNotEmpty && _allCustomer![index]["vehicles"] != null && _allCustomer![index]["vehicles"].length == 0 ? const SizedBox():
               Container(
                 padding: const EdgeInsets.only(left: 3, right: 3, top: 1, bottom: 1),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
                     color: Colors.black
                 ),
-                child:Text("${_allCustomer![index]["vehicles_count"]} ", style: const TextStyle(
+                child:Text("${_allCustomer![index]["vehicles_count"] == 0 ?
+                _allCustomer![index]["vehicles"].length : _allCustomer![index]["vehicles_count"]}", style: const TextStyle(
                     color: Colors.white
                 ),),)],),
 
