@@ -169,29 +169,29 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
         _isLoading = false;
       });
 
-      WidgetsBinding.instance
-          .addPostFrameCallback((_){
-            _allCustomer!.asMap().forEach((key, value) {
-              // logger.i("key value");
-              if(_allCustomer!.length <=  6){
-                _customerController[key][key]?.expand();
-                apiService.fetchCustomerVehicles(value["id"]).then((value){
-                  onExpansionChanged(value);
-                });
-
-              }
-              // //logger.i(_allCustomer);
-              // logger.i(key);
-              // logger.i(value);
-              ref.read(selectedCustomerProvider.notifier).update((state) {
-                return [...state, _allCustomer![key]];
-              });
-            });
-
-
-
-
-      });
+      // WidgetsBinding.instance
+      //     .addPostFrameCallback((_){
+      //       _allCustomer!.asMap().forEach((key, value) {
+      //         // logger.i("key value");
+      //         // if(_allCustomer!.length <=  6){
+      //         //   _customerController[key][key]?.expand();
+      //         //   apiService.fetchCustomerVehicles(value["id"]).then((value){
+      //         //     onExpansionChanged(value);
+      //         //   });
+      //         //
+      //         // }
+      //         // //logger.i(_allCustomer);
+      //         // logger.i(key);
+      //         // logger.i(value);
+      //         ref.read(selectedCustomerProvider.notifier).update((state) {
+      //           return [...state, _allCustomer![key]];
+      //         });
+      //       });
+      //
+      //
+      //
+      //
+      // });
     }
     //WebSocketProvider.subscribe(realtimeHandler);
   }

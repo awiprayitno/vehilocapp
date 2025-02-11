@@ -78,6 +78,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
     // WebSocketProvider.subscribe(realtimeHandler);
     // lat = widget.lat;
     // lon = widget.lon;
+
     MapScreen.globalSetState = (double? lat, double?lon){
       setState(() {
         this.lat = lat;
@@ -160,15 +161,15 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
     }
   }
 
-  Future<List<Geofences>> fetchGeofencesData() async {
-    try {
-      final List<Geofences> geofencesList = await apiService.fetchGeofences();
-      return geofencesList;
-    } catch (e) {
-      logger.e("Error fetching geofences: $e");
-      return [];
-    }
-  }
+  // Future<List<Geofences>> fetchGeofencesData() async {
+  //   try {
+  //     final List<Geofences> geofencesList = await apiService.fetchGeofences();
+  //     return geofencesList;
+  //   } catch (e) {
+  //     logger.e("Error fetching geofences: $e");
+  //     return [];
+  //   }
+  // }
 
   Future<List<Vehicle>> fetchAllData() async {
 
@@ -271,25 +272,30 @@ void _resetCameraPosition() {
 
     ref.listen(selectedCustomerProvider, (previous, next) {
       logger.i("selected change");
-      WebSocketProvider.unsubscribe(realtimeHandler).then((value){
+      WebSocketProvider.unsubscribe(realtimeHandler).then((value) async {
       _allVehicles.clear();
       customerSalts.clear();
+      _fetchGeofences.clear();
       m.clear();
 
       if(ref.watch(selectedCustomerProvider).isNotEmpty){
         for(var i in ref.watch(selectedCustomerProvider)){
           logger.d("selected customer");
           logger.i(i);
+
           _fetchGeofences = _fetchGeofences + (i["geofences"] ?? []);
           _allVehicles = _allVehicles + i["vehicles"];
           customerSalts.add(i["salt"]);
         }
+        setState(() {
+
+        });
         WebSocketProvider.subscribe(realtimeHandler, customerSalts);
       }
 
       //logger.d(_allVehicles);
       logger.i("data change");
-      logger.i(customerSalts);
+      logger.i(_fetchGeofences);
 
 
       });
