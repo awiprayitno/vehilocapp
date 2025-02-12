@@ -1,7 +1,7 @@
 name: VehiLoc
 description: "Cara mudah tracking kemana saja armada Anda pergi."
 publish_to: "none"
-version: 2.0.7+19
+version: 2.1.0+22
 
 environment:
   sdk: ">=3.2.5 <4.0.0"
@@ -30,7 +30,7 @@ dependencies:
     git:
       url: https://github.com/criswans/label_marker.git
       ref: main
-  pull_to_refresh_flutter3: ^2.0.2
+  pull_to_refresh: ^2.0.0
   build_runner: ^2.4.8 # to run code generators
   http: ^1.2.0 # HTTP client for making requests to servers
   flutter_slidable: ^0.6.0 # to provides a widget that allows items in a list to be slid to display actions

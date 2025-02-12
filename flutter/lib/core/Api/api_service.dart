@@ -225,7 +225,8 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        logger.i("Vehicle Daily Response: $jsonResponse");
+        logger.i("Vehicle Daily Response:");
+        logger.i(jsonResponse);
         return Data.fromJson(jsonResponse);
       } else {
         throw Exception('Failed to load data from API');
@@ -277,7 +278,7 @@ class ApiService {
     }
   }
   Future<List<Geofences>> fetchGeofencesPerCustomer(int customerId) async {
-    final String apiUrl = "$baseUrl/geofences_per_customer";
+    final String apiUrl = "$baseUrl/geofences_per_customer?customer_id=$customerId";
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();

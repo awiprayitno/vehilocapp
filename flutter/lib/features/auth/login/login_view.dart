@@ -114,58 +114,60 @@ class _LoginViewState extends State<LoginView> {
       if(value == true){
         await Permission.location.isGranted.then((va) async {
           if(!va){
-            await Permission.location.isPermanentlyDenied.then((v) async {
-              logger.i("location Permanent disable");
-              logger.wtf(v);
-              if(v){
-
-                await showDialog(
-                    barrierDismissible: false,
-                    context: context, builder: (BuildContext c){
-                  return AlertDialog(
-
-                    title: const Text(
-                        "Alert"
-                    ),
-                    content: Container(
-                      child: const Text("Silahkan buka pengaturan untuk memberikan akses lokasi ke Vehiloc"),
-                    ),
-                    actions: [
-                      ElevatedButton(onPressed: (){
-                        Geolocator.openLocationSettings().then((value) {
-                          exit(0);
-                        });
-
-
-                      }, child: const Text("Ok")),
-                    ],
-                  );
-                });
-              }else{
-                await showDialog(
-                    barrierDismissible: false,
-                    context: context, builder: (BuildContext c){
-                  return AlertDialog(
-                    // title: const Text(hf
-                    //     "Allow your location "
-                    // ),
-                    content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
-                    actions: [
-                      // ElevatedButton(onPressed: (){
-                      //   exit(0);
-                      // }, child: const Text("Cancel")),
-                      ElevatedButton(onPressed: ()async {
-                        Navigator.pop(context);
-                        PermissionStatus status = await Permission.location.request();
-                        if (!status.isGranted) {
-                          exit(0);
-                        }
-                      }, child: const Text("Continue")),
-                    ],
-                  );
-                });
-              }
-            });
+            await Permission.location.request();
+            // await showDialog(
+            //     barrierDismissible: false,
+            //     context: context, builder: (BuildContext c){
+            //   return AlertDialog(
+            //     // title: const Text(hf
+            //     //     "Allow your location "
+            //     // ),
+            //     content: const Text("We'll use your location to show vehicle positions relative to your current location and aid in easier vehicle searches"),
+            //     actions: [
+            //       // ElevatedButton(onPressed: (){
+            //       //   exit(0);
+            //       // }, child: const Text("Cancel")),
+            //       ElevatedButton(onPressed: ()async {
+            //         Navigator.pop(context);
+            //         await Permission.location.request();
+            //         // if (!status.isGranted) {
+            //         //   exit(0);
+            //         // }
+            //       }, child: const Text("Continue")),
+            //     ],
+            //   );
+            // });
+            // await Permission.location.isPermanentlyDenied.then((v) async {
+            //   logger.i("location Permanent disable");
+            //   logger.wtf(v);
+            //   if(v){
+            //
+            //     await showDialog(
+            //         barrierDismissible: false,
+            //         context: context, builder: (BuildContext c){
+            //       return AlertDialog(
+            //
+            //         title: const Text(
+            //             "Alert"
+            //         ),
+            //         content: Container(
+            //           child: const Text("Silahkan buka pengaturan untuk memberikan akses lokasi ke Vehiloc"),
+            //         ),
+            //         actions: [
+            //           ElevatedButton(onPressed: (){
+            //             Geolocator.openLocationSettings().then((value) {
+            //               exit(0);
+            //             });
+            //
+            //
+            //           }, child: const Text("Ok")),
+            //         ],
+            //       );
+            //     });
+            //   }else{
+            //
+            //   }
+            // });
 
           }
 

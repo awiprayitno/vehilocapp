@@ -5,6 +5,7 @@ import 'package:VehiLoc/core/utils/colors.dart';
 import 'package:VehiLoc/core/utils/loading_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:omni_datetime_picker/omni_datetime_picker.dart';
@@ -69,6 +70,8 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
             widget.arguments["item"]["dt"] * 1000).toLocal());
         selectedDt = DateTime.fromMillisecondsSinceEpoch(
             widget.arguments["item"]["dt"] * 1000).toLocal();
+    }else{
+      dateTimeController.text = DateFormat("yyyy-MM-dd HH:mm").format(DateTime.now());
     }
 
     vehicleId = widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"].toString():
@@ -104,6 +107,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
               Container(
                 margin: const EdgeInsets.only(top: 10),
                 child: DropdownMenu(
+                  enabled: widget.arguments["item"] == null,
                   initialSelection: widget.arguments["item"] != null ? widget.arguments["item"]["vehicle_id"]:
                   widget.arguments["selected_vehicle"],
 
@@ -205,6 +209,9 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                     Container(
                       margin: const EdgeInsets.only(top: 10),
                       child: TextFormField(
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+                        ],
                         validator: (value){
                           if(value?.trim() == ""){
                             return "Harga tidak boleh kosong";
@@ -284,6 +291,9 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                   title: const Text("Konfirmasi Hapus"),
                   content: const Text("Yakin ingin menghapus data?"),
                   actions: [
+                    ElevatedButton(onPressed: (){
+                      Navigator.of(c).pop();
+                    }, child: const Text("Batal")),
                     ElevatedButton(onPressed: () async {
                       Navigator.of(c).pop();
                       circularLoading(context);
@@ -322,50 +332,60 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
                         }
                       });
                     }, child: const Text("Ya")),
-                    ElevatedButton(onPressed: (){
-                      Navigator.of(c).pop();
-                    }, child: const Text("Batal")),
+
                   ],
                 );
               });
 
             }, icon: const Icon(Icons.delete, color: Colors.red,))
                 : const SizedBox(),
-            ElevatedButton(style: const ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll(Colors.green)
-            ),onPressed: (){
-              // circularLoading(context);
-              if(_formKey.currentState!.validate()){
-                //logger.i("data valid");
-                circularLoading(context);
+            Row(children: [
+              ElevatedButton(style: const ButtonStyle(
+                  backgroundColor: MaterialStatePropertyAll(Colors.red)
+              ),onPressed: (){
+                Navigator.of(context).pop(false);
+              }, child: const Text("Cancel", style: TextStyle(
+                  color: Colors.white
+              ),)),
+              const SizedBox(width: 10,),
+              ElevatedButton(style: const ButtonStyle(
+                  backgroundColor: MaterialStatePropertyAll(Colors.green)
+              ),onPressed: (){
+                // circularLoading(context);
+                if(_formKey.currentState!.validate()){
+                  //logger.i("data valid");
+                  circularLoading(context);
                   try{
-                      Map dataTemp = {};
-                      dataTemp = {
-                        "fuel_id": widget.arguments["item"] == null ? "" : widget.arguments["item"]["id"].toString(),
-                        "vehicle_id": vehicleId,
-                        "date": dateTimeController.text,
-                        "type": fuelBensin ? "1" : "2",
-                        "volume": litreController.text.trim(),
-                        "spbu": spbuController.text.trim(),
-                        "note": notesController.text.trim(),
-                        "price": priceController.text.trim()
-                      };
-                      apiService.addFuelData(data: dataTemp).then((value) {
-                        logger.i(value);
+                    Map dataTemp = {};
+                    dataTemp = {
+                      "fuel_id": widget.arguments["item"] == null ? "" : widget.arguments["item"]["id"].toString(),
+                      "vehicle_id": vehicleId,
+                      "date": dateTimeController.text,
+                      "type": fuelBensin ? "1" : "2",
+                      "volume": litreController.text.trim(),
+                      "spbu": spbuController.text.trim(),
+                      "note": notesController.text.trim(),
+                      "price": priceController.text.trim()
+                    };
+                    apiService.addFuelData(data: dataTemp).then((value) {
+                      logger.i(value);
+                      Navigator.of(context).pop(true);
+                      if (jsonDecode(value)["status"] == "SUCCESS") {
                         Navigator.of(context).pop(true);
-                        if (jsonDecode(value)["status"] == "SUCCESS") {
-                          Navigator.of(context).pop(true);
-                        }
-                      });
+                      }
+                    });
                   }catch(e){
                     Navigator.of(context).pop(true);
                     logger.e("error edit fuel");
                     logger.e(e);
                   }
-              }
-                }, child:  Text(widget.arguments["item"] == null ? "Save" : "Edit", style: const TextStyle(
-                color: Colors.white
-            ))),
+                }
+              }, child:  const Text("Save", style: TextStyle(
+                  color: Colors.white
+              ))),
+            ],)
+
+
             // widget.arguments["item"] == null ?
             // ElevatedButton(style: const ButtonStyle(
             //     backgroundColor: MaterialStatePropertyAll(Colors.green)
@@ -422,13 +442,7 @@ class _AddEditFuelState extends ConsumerState<AddEditFuel> {
             //     color: Colors.white
             // )))
             //: const SizedBox(),
-            ElevatedButton(style: const ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll(Colors.red)
-            ),onPressed: (){
-              Navigator.of(context).pop(false);
-            }, child: const Text("Cancel", style: TextStyle(
-                color: Colors.white
-            ),)),
+
 
           ],
         ),

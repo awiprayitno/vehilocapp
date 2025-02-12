@@ -16,7 +16,7 @@ class BottomBar extends StatefulWidget {
   final double? lon;
 
   const BottomBar({Key? key, this.lat, this.lon}) : super(key: key);
-  static int currentIndex = 0;
+  static int currentIndex = 1;
   static Function? globalSetState;
 
   @override
@@ -30,8 +30,9 @@ class _BottomBarState extends State<BottomBar> {
 
   @override
   void initState() {
+    BottomBar.currentIndex = 1;
     super.initState();
-    _controller = PersistentTabController(initialIndex: BottomBar.currentIndex);
+    _controller = PersistentTabController(initialIndex: 1);
     var mapScreen = MapScreen(lat: widget.lat, lon: widget.lon);
 
     _navScreens = [
@@ -51,6 +52,8 @@ class _BottomBarState extends State<BottomBar> {
   }
 
   List<PersistentBottomNavBarItem> _navBarsItems() {
+    logger.d("index");
+    logger.i(BottomBar.currentIndex);
     return [
       PersistentBottomNavBarItem(
         icon: ColorFiltered(

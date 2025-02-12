@@ -11,7 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:intl/intl.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
-import 'package:pull_to_refresh_flutter3/pull_to_refresh_flutter3.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+
 
 import '../../core/Api/api_service.dart';
 import '../../core/model/response_vehicles.dart';
@@ -206,6 +207,7 @@ class _FuelViewState extends ConsumerState<FuelView> {
                       onRefresh: _onRefresh,
                       onLoading: _onLoading,
                       child: PagedListView<int, dynamic>(
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                         addRepaintBoundaries: true,
                         cacheExtent: 10,
                         addSemanticIndexes: true,

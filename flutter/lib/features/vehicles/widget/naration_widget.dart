@@ -161,7 +161,7 @@ class _NarationWidgetState extends State<NarationWidget> with SingleTickerProvid
                                                 Text(
                                                   address,
                                                   style: const TextStyle(
-                                                    fontSize: 10,
+                                                    fontSize: 12,
                                                     fontFamily: 'Poppins',
                                                   ),
                                                 ),
