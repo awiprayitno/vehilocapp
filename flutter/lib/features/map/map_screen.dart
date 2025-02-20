@@ -223,8 +223,8 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
           polygonId: PolygonId('geofence$i'),
           points: points,
           strokeWidth: 2,
-          strokeColor: Colors.orange,
-          fillColor: Colors.orange.withOpacity(0.2),
+          strokeColor: Colors.red,
+          fillColor: Colors.red.withOpacity(0.2),
         ),
       );
     }
