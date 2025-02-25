@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:VehiLoc/core/Api/websocket.dart';
+import 'package:VehiLoc/core/utils/user_provider.dart';
 import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -269,6 +270,7 @@ void _resetCameraPosition() {
     if (m.isEmpty) {
       setMarkers(realtime);
     }
+    final userModels = ref.watch(userProvider.notifier).state;
 
     ref.listen(selectedCustomerProvider, (previous, next) {
       logger.i("selected change");
@@ -334,7 +336,7 @@ void _resetCameraPosition() {
           ),
           backgroundColor: GlobalColor.mainColor,
           actions: [
-            _fetchGeofences.isNotEmpty ?
+            _fetchGeofences.isNotEmpty && userModels["roles"]["can_geofence_view"]?
                  Row(children: [
                     const Text("Geofence ",
                       style: TextStyle(fontSize: 16, color: Colors.white),),

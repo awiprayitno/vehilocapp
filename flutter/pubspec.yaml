@@ -10,12 +10,16 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
+  bluetooth_print: ^4.3.0
+  flutter_blue_plus: ^1.35.3
   omni_datetime_picker: ^1.1.0
   dropdown_search: ^5.0.6
+  fluttertoast: ^8.2.8
   provider: ^6.1.1 # state management
   intl: ^0.19.0 # to use international function
   connectivity_plus: ^5.0.2 # to monitor the internet connection status 
   shared_preferences: ^2.2.2 # to store data on user devices
+  flutter_secure_storage: ^9.2.4
   flutter_svg: ^2.0.9 # to handle svg
   google_fonts: ^6.1.0 # to use font google
   hexcolor: ^3.0.1 # to use color without 0xff

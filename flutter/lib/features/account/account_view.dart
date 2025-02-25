@@ -1,3 +1,4 @@
+import 'package:VehiLoc/features/account/widget/printer.dart';
 import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,6 +127,31 @@ class _AccountViewState extends ConsumerState<AccountView> {
                         },
                       ),
                       const SizedBox(height: 10),
+                      ElevatedButton(
+                          style: ButtonStyle(
+                            minimumSize: MaterialStateProperty.all(Size(
+                              MediaQuery.of(context).size.width * 0.3,
+                              50,
+                            )),
+                            backgroundColor: MaterialStateProperty.all(
+                                GlobalColor.mainColor),
+                            shape: MaterialStateProperty.all(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            elevation: MaterialStateProperty.all(10),
+                          ),
+                          onPressed: (){
+                        PersistentNavBarNavigator.pushNewScreen(
+                          context,
+                          screen: Printer2(),
+                          withNavBar: false,
+                          pageTransitionAnimation: PageTransitionAnimation.fade,
+                        );
+                      }, child: const Text("Setup Printer", style: TextStyle(
+                        color: Colors.white
+                      ),)),
                       Text(
                         'Version: $version+$buildNumber',
                         textAlign: TextAlign.center,

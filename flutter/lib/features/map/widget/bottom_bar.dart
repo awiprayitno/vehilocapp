@@ -1,6 +1,7 @@
 import 'package:VehiLoc/features/maintenance/fuel_service_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,11 +12,13 @@ import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:VehiLoc/features/vehicles/vehicles_view.dart';
 import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 
-class BottomBar extends StatefulWidget {
+class BottomBar extends ConsumerStatefulWidget {
   final double? lat;
   final double? lon;
 
-  const BottomBar({Key? key, this.lat, this.lon}) : super(key: key);
+  final bool? canMaintenanceView;
+
+  const BottomBar({Key? key, this.lat, this.lon, this.canMaintenanceView}) : super(key: key);
   static int currentIndex = 1;
   static Function? globalSetState;
 
@@ -23,7 +26,7 @@ class BottomBar extends StatefulWidget {
   _BottomBarState createState() => _BottomBarState();
 }
 
-class _BottomBarState extends State<BottomBar> {
+class _BottomBarState extends ConsumerState<BottomBar> {
   late PersistentTabController _controller = PersistentTabController();
 
   late List<Widget> _navScreens;

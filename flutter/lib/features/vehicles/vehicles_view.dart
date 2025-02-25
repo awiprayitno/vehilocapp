@@ -1,8 +1,18 @@
 
 
 
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:VehiLoc/core/utils/loading_widget.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:VehiLoc/core/utils/user_provider.dart';
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
 import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
+import 'package:bluetooth_print/bluetooth_print.dart';
+import 'package:bluetooth_print/bluetooth_print_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -17,6 +27,9 @@ import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 
 import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/utils/global_func.dart';
 
 class VehicleView extends ConsumerStatefulWidget {
   const VehicleView({Key? key}) : super(key: key);
@@ -36,16 +49,32 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   //final Map<Vehicle, String> _vehicleToAddress = {};
 
   final List<Map<int, ExpansionTileController>> _customerController = [];
+  final sharePreference = SpData();
   TextEditingController searchController = TextEditingController();
   RefreshController refreshController = RefreshController();
+
+  BluetoothPrint bluetoothPrint = BluetoothPrint.instance;
+  bool initialConnecting = false;
+  bool canPrint = false;
+  Timer? timer;
+
+  Map userModels = {};
+
+  BluetoothDevice? _selectedDevice;
 
   @override
   void initState() {
     super.initState();
+    initializeDateFormatting();
+    connectToPrinter().then((value){
+      _fetchData();
+    });
+    
     // _filteredVehicles = [];
     // _allVehicles = [];
     // _groupedVehicles = {};
-    _fetchData();
+
+    
 
 
     //WebSocketProvider.subscribe(realtimeHandler);
@@ -74,6 +103,106 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
     //     logger.i('WebSocket closed');
     //   },
     // );
+  }
+
+  Future<LineText> createPrintTemplate(Map data) async {
+    //LineText(type: LineText.TYPE_TEXT, height: 1, width: 1, align: LineText.ALIGN_CENTER, linefeed: 1, content: vehicle.plateNo);
+    LineText lineText = LineText(
+      type: data["type"] == "image" ? LineText.TYPE_IMAGE : LineText.TYPE_TEXT,
+      height: data["type"] == "image" ? data["height"]:data["font_size"],
+      width: data["type"] == "image" ? data["width"] :data["font_size"],
+      align: data["alignment"] == "center" ?
+      LineText.ALIGN_CENTER : data["alignment"] == "left" ? LineText.ALIGN_LEFT
+          : LineText.ALIGN_RIGHT,
+      content: data["type"] == "image" ?
+      await networkImageToBase64(Uri.parse(data["data"]))
+          : data["data"],
+      linefeed: 1
+    );
+
+    // list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_CENTER, linefeed: 1, content: ""));
+
+    return lineText;
+  }
+
+
+  Future<String> _getUsername() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('username') ?? '';
+  }
+
+  Future connectToPrinter() async {
+
+    sharePreference.loadPrinter().then((String? printerAddress) async {
+      logger.i('$printerAddress - from cache');
+      if (printerAddress != null ) {
+        canPrint = true;
+        initBluetooth();
+        setState(() {
+          initialConnecting = true;
+        });
+        //logger.d('get printer from local storage', printerAddress);
+        _selectedDevice = BluetoothDevice();
+        _selectedDevice!.address = printerAddress;
+        timer = Timer(const Duration(seconds: 5), () {
+          setState(() {
+            initialConnecting = false;
+          });
+          bluetoothPrint.connect(_selectedDevice!);
+        });
+      } else {
+        canPrint = false;
+        logger.d('no device');
+      }
+    });
+  }
+
+  initBluetooth() async {
+    bluetoothPrint.state.listen((state) {
+      logger.i('******************* cur device status: $state');
+      logger.i(BluetoothPrint.CONNECTED);
+      if(state == 0){
+        setState(() {
+          canPrint = false;
+        });
+      }
+
+      if(state == 1){
+        setState(() {
+          canPrint = true;
+        });
+      }
+
+      // if(BluetoothPrint.CONNECTED == 1){
+      //   setState(() {
+      //     canPrint = true;
+      //   });
+      // }else if(BluetoothPrint.CONNECTED == 0){
+      //   setState(() {
+      //     canPrint = true;
+      //   });
+      // }
+      switch (state) {
+        case BluetoothPrint.CONNECTED:
+          if (mounted) {
+            setState(() {
+              canPrint = true;
+              logger.i("connected to printer");
+            });
+          }
+          break;
+        case BluetoothPrint.DISCONNECTED:
+          if (mounted) {
+            setState(() {
+              canPrint = false;
+              logger.i('not connected to printer');
+            });
+          }
+          break;
+        default:
+          break;
+      }
+    });
   }
   void showModal() {
     showModalBottomSheet(
@@ -125,11 +254,17 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
   void _onRefresh() async {
     // monitor network fetch
-    if(searchController.text.isNotEmpty){
-      onSearch(searchController.text.trim());
-    }else{
-      _fetchData();
-    }
+
+
+      connectToPrinter().then((value){
+        if(searchController.text.isNotEmpty){
+          onSearch(searchController.text.trim());
+        }else{
+          _fetchData();
+        }
+      });
+
+
 
     refreshController.refreshCompleted();
 
@@ -570,7 +705,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                     children: [
 
                       SizedBox(
-                        width: (MediaQuery.of(context).size.width / 2) -10,
+                        width: userModels["roles"]["can_last_update_print"] ? (MediaQuery.of(context).size.width / 3) :  (MediaQuery.of(context).size.width / 2) - 10,
                         child: ElevatedButton(
                             style:ButtonStyle(
                                 backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
@@ -592,7 +727,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                         )),
                       ),
                       SizedBox(
-                        width: (MediaQuery.of(context).size.width / 2) -10,
+                        width: userModels["roles"]["can_last_update_print"] ? (MediaQuery.of(context).size.width / 3) :  (MediaQuery.of(context).size.width / 2) - 10,
                         child: ElevatedButton(
                             style:ButtonStyle(
                                 backgroundColor: MaterialStatePropertyAll(GlobalColor.mainColor),
@@ -615,6 +750,125 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                             )),
 
                       ),
+                      userModels["roles"]["can_last_update_print"] ?
+                      SizedBox(
+                        width: (MediaQuery.of(context).size.width / 3) - 20,
+                        child:
+                        ElevatedButton(
+                            style:ButtonStyle(
+                                backgroundColor: MaterialStatePropertyAll(canPrint ?GlobalColor.mainColor : Colors.grey),
+                                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.zero,
+                                        side: BorderSide(color: Colors.white)
+                                    )
+                                )
+                            ),
+                            onPressed:
+                            //                         (){
+    //                           setState(() {
+    //                             canPrint = !canPrint;
+    //                           });
+    //                           logger.i("setstafsghjuags");
+    // },
+                            canPrint ? () async {
+                              // BuildContext? c;
+                              circularLoading(context);
+                              try{
+                              await apiService.fetchPrintData(vehicle.vehicleId!).then((value) async {
+                                Map printData = jsonDecode(value);
+                                List<LineText> list = [];
+                                Map<String, dynamic> config = Map();
+                                if(printData["status"] == "SUCCESS"){
+                                  Navigator.of(context, rootNavigator: true).pop();
+                                  for(var i in printData["result"]){
+                                    list.add(await createPrintTemplate(i));
+                                  }
+                                  logger.d("list data");
+                                  logger.i(list);
+                                  logger.i(list.length);
+                                  //list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_CENTER, linefeed: 1, content: ""));
+                                  await bluetoothPrint.printReceipt(config, list);
+                                }else if(printData["status"] == "FAILED"){
+                                  Navigator.of(context, rootNavigator: true).pop();
+                                 showDialog(context: context, builder: (BuildContext ct){
+                                   return AlertDialog(
+                                     content: Text(printData["result"]),
+                                     actions: [
+                                       TextButton(onPressed: (){
+                                         Navigator.of(ct, rootNavigator: true).pop();
+                                       }, child: const Text("Ok"))
+                                     ],
+                                   );
+                                 });
+                                }
+                                logger.i(value);
+
+                              });
+                              }catch(e,t){
+                                Navigator.of(context, rootNavigator: true).pop();
+                                logger.w(t);
+                                logger.e(e);
+                                // showDialog(context: context, builder: (BuildContext ct){
+                                //   return AlertDialog(
+                                //     content: Text(e.toString()),
+                                //     actions: [
+                                //       TextButton(onPressed: (){
+                                //         Navigator.of(ct, rootNavigator: true).pop();
+                                //       }, child: const Text("Ok"))
+                                //     ],
+                                //   );
+                                // });
+                              }
+
+
+                              // Navigator.of(c).pop();
+
+                              //
+                              // logger.i(canPrint);
+                              // logger.d("user provider");
+                              // logger.d(ref.watch(userProvider.notifier).state);
+                              // List<LineText> list = [];
+                              // String gpsDate = DateFormat("dd MMMM yyyy", "id").format(DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000));
+                              // String gpsTime = DateFormat("HH:mm", "id").format(DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000));
+                              // String dateNow = DateFormat("dd MMMM yyyy", "id").format(DateTime.now());
+                              // String timeNow = DateFormat("HH:mm:ss", "id").format(DateTime.now());
+                              //
+                              // String username = await _getUsername();
+                              // Map<String, dynamic> config = Map();
+                              //
+                              // // list.add(LineText(type: LineText.TYPE_IMAGE,
+                              // //     content: await imageAssetToBase64("assets/logo/vehiloc-logo.png"),
+                              // //   align: LineText.ALIGN_CENTER,
+                              // //   height: 200,
+                              // //   width: 400,
+                              // // ));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 1, width: 1, align: LineText.ALIGN_CENTER, linefeed: 1, content: vehicle.plateNo));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 1, width: 1, align: LineText.ALIGN_CENTER, linefeed: 1, content: vehicle.customerName));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_LEFT, linefeed: 1, content: "Last Update : $gpsDate"));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_RIGHT, linefeed: 1, content: "$gpsTime  "));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_LEFT, linefeed: 1, content: "Dicetak : $dateNow"));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_RIGHT, linefeed: 1, content: "$timeNow  "));
+                              // list.add(LineText(type: LineText.TYPE_TEXT, height: 0, width: 0, align: LineText.ALIGN_LEFT, linefeed: 1, content: "Username : $username"));
+                              //
+                              // try{
+                              // await bluetoothPrint.printReceipt(config, list);
+                              // }catch(e){
+                              //   logger.e(e);
+                              // }
+                            } : null,
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                FaIcon(FontAwesomeIcons.print, color: Colors.white, size: 16,),
+                                Text(" Print", style: TextStyle(color: Colors.white),)
+                              ],
+                            )),
+
+                      ) : const SizedBox(),
+
+
+
 
 
                     ],
@@ -634,6 +888,10 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
   @override
   Widget build(BuildContext context) {
+
+    userModels = ref.watch(userProvider.notifier).state;
+
+
 
     super.build(context);
     return MaterialApp(

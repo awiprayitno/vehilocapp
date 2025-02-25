@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:VehiLoc/core/Api/api_service.dart';
+import 'package:VehiLoc/core/utils/user_provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,7 +18,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:VehiLoc/core/model/response_image_promo.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends ConsumerStatefulWidget {
   final TextEditingController? usernameController; 
 
   const LoginView({Key? key, this.usernameController}) : super(key: key);
@@ -29,7 +32,7 @@ class LoginState {
   static String userSalt = "";
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends ConsumerState<LoginView> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -38,6 +41,8 @@ class _LoginViewState extends State<LoginView> {
   late String version = '';
   late String buildNumber = '';
   Carousel? carousel;
+
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -207,49 +212,93 @@ class _LoginViewState extends State<LoginView> {
     final String username = _usernameController.text.trim();
     final String password = _passwordController.text.trim();
 
-    final String basicAuth = 'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+    await apiService.login(username, password).then((response) async {
 
-    const String apiUrl = 'https://vehiloc.net/rest/token';
+      logger.d(username);
+      logger.d(password);
 
-    try {
-      final http.Response response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {'Authorization': basicAuth},
-      );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        logger.i(response.body);
-        final String token = data['token'];
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          // logger.i("response token");
+          // logger.i(response.body);
+          final String token = data['token'];
 
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('token', token);
-        prefs.setString('username', username);
-        prefs.setString('password', password);
+          ref.read(userProvider.notifier).state = jsonDecode(response.body);
 
-        await _fetchAndCacheCustomerSalts();
-        await _requestLocationPermission(context);
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('token', token);
+          prefs.setString('username', username);
+          prefs.setString('password', password);
 
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const BottomBar()),
-            (Route<dynamic> route) => false,
-        );
-      } else {
-        logger.e('Failed to login. Status code: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid Username or Password.'),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (error) {
-      logger.e('Error: $error');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
+          await _fetchAndCacheCustomerSalts();
+          await _requestLocationPermission(context);
+
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const BottomBar()),
+              (Route<dynamic> route) => false,
+          );
+        } else {
+          logger.e('Failed to login. Status code: ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid Username or Password.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+
+
+    });
+
+    // final String basicAuth = 'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+    //
+    // const String apiUrl = 'https://dev.vehiloc.net/rest/token';
+    //
+    // try {
+    //   final http.Response response = await http.get(
+    //     Uri.parse(apiUrl),
+    //     headers: {'Authorization': basicAuth},
+    //   );
+    //
+    //   if (response.statusCode == 200) {
+    //     final Map<String, dynamic> data = json.decode(response.body);
+    //     logger.i("response token");
+    //     logger.i(response.body);
+    //     final String token = data['token'];
+    //
+    //     ref.read(userProvider.notifier).state = jsonDecode(response.body);
+    //
+    //     SharedPreferences prefs = await SharedPreferences.getInstance();
+    //     prefs.setString('token', token);
+    //     prefs.setString('username', username);
+    //     prefs.setString('password', password);
+    //
+    //     await _fetchAndCacheCustomerSalts();
+    //     await _requestLocationPermission(context);
+    //
+    //     Navigator.of(context).pushAndRemoveUntil(
+    //         MaterialPageRoute(builder: (context) => const BottomBar()),
+    //         (Route<dynamic> route) => false,
+    //     );
+    //   } else {
+    //     logger.e('Failed to login. Status code: ${response.statusCode}');
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       const SnackBar(
+    //         content: Text('Invalid Username or Password.'),
+    //         duration: Duration(seconds: 3),
+    //       ),
+    //     );
+    //   }
+    // } catch (error) {
+    //   logger.e('Error: $error');
+    // } finally {
+    //
+    // }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override

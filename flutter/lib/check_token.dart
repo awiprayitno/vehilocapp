@@ -1,21 +1,27 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
 import 'package:VehiLoc/features/auth/login/login_view.dart';
 import 'package:VehiLoc/features/map/widget/bottom_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class CheckToken extends StatefulWidget {
+import 'core/utils/user_provider.dart';
+
+class CheckToken extends ConsumerStatefulWidget {
   const CheckToken({super.key});
 
   @override
-  State<CheckToken> createState() => _CheckTokenState();
+  ConsumerState<CheckToken> createState() => _CheckTokenState();
 }
 
-class _CheckTokenState extends State<CheckToken> {
+class _CheckTokenState extends ConsumerState<CheckToken> {
+  ApiService apiService = ApiService();
   Future<void> _requestLocationPermission(BuildContext context) async {
     await Permission.location.serviceStatus.isEnabled.then((value) async {
       logger.i("permission");
@@ -110,14 +116,40 @@ class _CheckTokenState extends State<CheckToken> {
   Future<void> _checkTokenAndRedirect() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
+
     await _requestLocationPermission(context);
 
     if (token != null && token.isNotEmpty) {
-      Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const BottomBar()),
-          (Route<dynamic> route) => false,
-      );
-      LoginState.userSalt = prefs.getString("customerSalts")!;
+      String? username = prefs.getString("username");
+      String? password = prefs.getString("password");
+      apiService.login(username!, password!).then((response) async {
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(response.body);
+          // logger.i("response token");
+          // logger.i(response.body);
+          final String token = data['token'];
+
+          ref.read(userProvider.notifier).state = jsonDecode(response.body);
+
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setString('token', token);
+          prefs.setString('username', username);
+          prefs.setString('password', password);
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const BottomBar()),
+                (Route<dynamic> route) => false,
+          );
+          LoginState.userSalt = prefs.getString("customerSalts")!;
+        } else {
+          logger.e('Failed to login. Status code: ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid Username or Password.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      });
     } else {
       Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginView()),

@@ -1,12 +1,11 @@
 
+import 'package:VehiLoc/core/utils/user_provider.dart';
 import 'package:VehiLoc/features/maintenance/fuel_view.dart';
 import 'package:VehiLoc/features/maintenance/service_view.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
-import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 
 
 class FuelServiceView extends ConsumerStatefulWidget {
@@ -31,6 +30,20 @@ class _FuelServiceViewState extends ConsumerState<FuelServiceView> with Automati
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> tabBar = [];
+    List<Widget> tabBarView = [];
+    final userModels = ref.watch(userProvider.notifier).state;
+
+    if(userModels["roles"]["can_fuels_view"]){
+      tabBar.add(const Tab(text: 'Fuel'));
+      tabBarView.add(FuelView());
+    }
+
+    if(userModels["roles"]["can_services_view"]){
+      tabBar.add(const Tab(text: 'Service'));
+      tabBarView.add(ServiceView());
+    }
+
     super.build(context);
     return MaterialApp(
       theme: ThemeData(
@@ -44,28 +57,21 @@ class _FuelServiceViewState extends ConsumerState<FuelServiceView> with Automati
           ),),
           backgroundColor: GlobalColor.mainColor,
         ),
-        body: DefaultTabController(
-            length: 2, // length of tabs
+        body: tabBar.isEmpty
+            ? const Center(
+          child: Text("Anda tidak memiliki akses melihat data Maintenance"),
+        )
+            :DefaultTabController(
+            length: tabBar.length , // length of tabs
             initialIndex: 0,
             child: Column(children: <Widget>[
-              const TabBar(
+             TabBar(
                 labelColor: Colors.green,
                 unselectedLabelColor: Colors.black,
-                tabs: [
-                  Tab(text: 'Fuel'),
-                  Tab(text: 'Service'),
-                ],
+                tabs: tabBar
               ),
               Expanded(
-                  child: TabBarView(children: <Widget>[
-                    FuelView(),
-                    ServiceView()
-
-
-
-
-
-                  ]))
+                  child: TabBarView(children: tabBarView))
             ]))
       ),
     );

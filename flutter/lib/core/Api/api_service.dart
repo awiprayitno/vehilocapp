@@ -14,10 +14,44 @@ import 'package:VehiLoc/core/model/dashcamtype1.dart';
 
 class ApiService {
   final String baseUrl = "https://vehiloc.net/rest/";
+  final String baseDevUrl = "https://dev.vehiloc.net/rest/";
   final String baseApiUrl = "https://vehiloc.net/api";
   final String baseDevApiUrl = "https://dev.vehiloc.net/api";
   final String baseUrlDashcam = "https://dev.vehiloc.net/api/v1.0/live_stream";
   int timeoutDuration = 20000;
+
+
+  Future<http.Response> login(String username, String password) async {
+    final String apiUrl = "$baseDevUrl/token";
+    String basicAuth = 'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+    try {
+        http.Response response = await http.get(
+          Uri.parse(apiUrl),
+          headers: {'Authorization': basicAuth},
+        );
+
+        if (response.statusCode == 200) {
+          // final Map<String, dynamic> data = json.decode(response.body);
+          logger.i("response token");
+          logger.i(response.body);
+          // final String token = data['token'];
+          // SharedPreferences prefs = await SharedPreferences.getInstance();
+          // prefs.setString('token', token);
+          // prefs.setString('username', username);
+          // prefs.setString('password', password);
+
+
+          return response;
+        } else {
+          logger.e('Failed to login. Status code: ${response.statusCode}');
+          return response;
+        }
+
+    } catch (e, t) {
+      return http.Response("Error", 400);
+    }
+  }
 
   Future<List<Vehicle>> fetchAllVehicles() async {
     final String apiUrl = "$baseUrl/vehicles";
@@ -109,6 +143,45 @@ class ApiService {
     }
   }
 
+  Future<String> fetchPrintData(int vehicleId) async {
+    final String apiUrl = "$baseDevApiUrl/v1.0/get_last_update_print_data?vehicle_id=$vehicleId";
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      final String username = prefs.getString('username') ?? "";
+      final String password = prefs.getString('password') ?? "";
+
+      if (username.isEmpty || password.isEmpty) {
+        logger.e("Username or password not found");
+        return "";
+      }
+
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('$username:$password'))}';
+
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {'Authorization': basicAuth},
+      );
+
+      logger.i("response fetch print");
+      logger.i(response.body);
+
+      if (response.statusCode == 200) {
+
+
+        return response.body.toString();
+      } else {
+        logger.e("API request failed with status code: ${response.statusCode}");
+        return "";
+      }
+    } catch (e, t) {
+      logger.e("Error during API request: $e");
+      logger.w(t);
+      return "";
+    }
+  }
 
   Future<List> fetchCustomers() async {
     final String apiUrl = "$baseUrl/customers";
@@ -155,6 +228,7 @@ class ApiService {
       return [];
     }
   }
+
   Future<List> searchVehicle(String q) async {
     final String apiUrl = "$baseUrl/search?q=$q";
 
