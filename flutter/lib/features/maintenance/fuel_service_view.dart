@@ -4,6 +4,7 @@ import 'package:VehiLoc/features/maintenance/fuel_view.dart';
 import 'package:VehiLoc/features/maintenance/service_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:VehiLoc/core/utils/colors.dart';
 
@@ -58,8 +59,8 @@ class _FuelServiceViewState extends ConsumerState<FuelServiceView> with Automati
           backgroundColor: GlobalColor.mainColor,
         ),
         body: tabBar.isEmpty
-            ? const Center(
-          child: Text("Anda tidak memiliki akses melihat data Maintenance"),
+            ? Center(
+          child: FaIcon(FontAwesomeIcons.screwdriverWrench, size: 100, color: GlobalColor.mainColor.withOpacity(0.7), ),
         )
             :DefaultTabController(
             length: tabBar.length , // length of tabs

@@ -394,7 +394,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                 List<Widget> vehicleWidgets = await onExpansionChanged(searchData[s]["vehicles"]
                     .map((vehicleJson) => Vehicle.fromJson(vehicleJson))
                     .cast<Vehicle>()
-                    .toList());
+                    .toList(), true);
 
                 _vehicleWidgets.add({s: vehicleWidgets});
               }
@@ -412,17 +412,19 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             _isLoading = false;
           });
 
-          // WidgetsBinding.instance
-          //     .addPostFrameCallback((_){
-          //   for(int i =0; i < _allCustomer!.length; i++){
-          //     if(_allCustomer![i]["vehicles_count"] <= 6){
-          //       _customerController[i][i]?.expand();
-          //
-          //     }
-          //   }
-          //
-          //
-          // });
+          WidgetsBinding.instance
+              .addPostFrameCallback((_){
+                // logger.i("allCustomerLength");
+                // logger.i(_allCustomer?.length);
+
+            if(_allCustomer!.length <= 2){
+              for(int i =0; i < _allCustomer!.length; i++){
+                if(_allCustomer![i]["vehicles_count"] <= 6 && _allCustomer![i]["vehicles_count"] != null && _allCustomer![i]["vehicles_count"] != 0){
+                  _customerController[i][i]?.expand();
+                }
+              }
+            }
+          });
         }
 
 
@@ -467,13 +469,19 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
     }
   }
 
-  Future<List<Widget>> onExpansionChanged(List<Vehicle> vehicles) async {
+  Future<List<Widget>> onExpansionChanged(List<Vehicle> vehicles, bool expanded) async {
     List<Widget> vehiclesWidget = [];
 
-    List<Vehicle> value = vehicles;
-      for(Vehicle v in value){
-        Vehicle vehicle = v;
+    List<ExpansionTileController> expansionTileControllers = [];
+
+      for(int i = 0; i < vehicles.length;i++){
+        Vehicle vehicle = vehicles[i];
         DateTime? gpsdtWIB;
+
+        expansionTileControllers.add(ExpansionTileController());
+
+
+
         if (vehicle.gpsdt != null) {
           DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(vehicle.gpsdt! * 1000, isUtc: true);
           gpsdtWIB = gpsdtUtc.add(const Duration(hours: 7));
@@ -481,6 +489,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
         vehiclesWidget.add(
           ExpansionTile(
+            controller: expansionTileControllers[i],
               onExpansionChanged: (isExpand){
                 // if(isExpand){
                 //   setState(() {
@@ -775,7 +784,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                               // BuildContext? c;
                               circularLoading(context);
                               try{
-                              await apiService.fetchPrintData(vehicle.vehicleId!).then((value) async {
+                              await apiService.fetchPrintData(vehicle.vehicleId!, DateTime.now().timeZoneOffset.inHours).then((value) async {
                                 Map printData = jsonDecode(value);
                                 List<LineText> list = [];
                                 Map<String, dynamic> config = Map();
@@ -882,7 +891,29 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
 
         );
+        // WidgetsBinding.instance
+        //     .addPostFrameCallback((_){
+        //   // logger.i("allCustomerLength");
+        //   // logger.i(_allCustomer?.length);
+        //
+        //   if(expanded){
+        //     try{
+        //       setState(() {
+        //         expansionTileControllers[i].expand();
+        //       });
+        //
+        //
+        //     }catch(e){
+        //       logger.e(e);
+        //     }
+        //     // for(var i in expansionTileControllers){
+        //     //   i.expand();
+        //     // }
+        //     logger.i("expand vehilce");
+        //   }
+        // });
       }
+
     return vehiclesWidget;
   }
 
@@ -907,7 +938,13 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
               FocusManager.instance.primaryFocus?.unfocus();
               onSearch(searchController.text.trim());
             },
-            //onChanged: onSearch,
+            onChanged: (value){
+              if(value.trim().length >= 4){
+                onSearch(searchController.text.trim());
+              }else if(value.trim().isEmpty){
+                onSearch(searchController.text.trim());
+              }
+            },
             style: TextStyle(color: GlobalColor.textColor),
             decoration: InputDecoration(
               hintText: 'Search...',
@@ -919,7 +956,12 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             IconButton(onPressed: (){
               FocusManager.instance.primaryFocus?.unfocus();
               onSearch(searchController.text.trim());
-            }, icon: const Icon(Icons.search), color: Colors.white,)
+            }, icon: const Icon(Icons.search), color: Colors.white,),
+            IconButton(onPressed: (){
+              FocusManager.instance.primaryFocus?.unfocus();
+              searchController.clear();
+              onSearch(searchController.text.trim());
+            }, icon: const Icon(Icons.cancel), color: Colors.white,)
           ],
           backgroundColor: GlobalColor.mainColor,
         ),
@@ -948,7 +990,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                   });
                   await apiService.fetchCustomerVehicles(_allCustomer![index]["id"]).then((vehicles) async {
                     await apiService.fetchGeofencesPerCustomer(_allCustomer![index]["id"]).then((geofences){
-                      onExpansionChanged(vehicles).then((v){
+                      onExpansionChanged(vehicles, false).then((v){
                         _allCustomer![index]["vehicles"] = vehicles;
                         _allCustomer![index]["geofences"] = geofences;
                         logger.i("done");

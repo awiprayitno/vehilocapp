@@ -143,8 +143,10 @@ class ApiService {
     }
   }
 
-  Future<String> fetchPrintData(int vehicleId) async {
-    final String apiUrl = "$baseDevApiUrl/v1.0/get_last_update_print_data?vehicle_id=$vehicleId";
+  Future<String> fetchPrintData(int vehicleId, int timeZone) async {
+    logger.d("timezone");
+    logger.i(timeZone);
+    final String apiUrl = "$baseDevApiUrl/v1.0/get_last_update_print_data?vehicle_id=$vehicleId&timezone=$timeZone";
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
