@@ -22,7 +22,7 @@ class ApiService {
 
 
   Future<http.Response> login(String username, String password) async {
-    final String apiUrl = "$baseDevUrl/token";
+    final String apiUrl = "$baseUrl/token";
     String basicAuth = 'Basic ${base64Encode(utf8.encode('$username:$password'))}';
 
     try {
@@ -146,7 +146,7 @@ class ApiService {
   Future<String> fetchPrintData(int vehicleId, int timeZone) async {
     logger.d("timezone");
     logger.i(timeZone);
-    final String apiUrl = "$baseDevApiUrl/v1.0/get_last_update_print_data?vehicle_id=$vehicleId&timezone=$timeZone";
+    final String apiUrl = "$baseApiUrl/v1.0/get_last_update_print_data?vehicle_id=$vehicleId&timezone=$timeZone";
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();

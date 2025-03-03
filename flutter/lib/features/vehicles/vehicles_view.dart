@@ -57,6 +57,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   bool initialConnecting = false;
   bool canPrint = false;
   Timer? timer;
+  int state = 0;
 
   Map userModels = {};
 
@@ -355,25 +356,44 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   //   });
   // }
 
+
+  void initiateRequest(String value) {
+    if (state > 100) state = 0;
+    state++;
+    int localState = state;
+
+    logger.d("states");
+    logger.i(state);
+    Future.delayed(const Duration(milliseconds: 500)).then((_) {
+      if (localState != state) {
+        return;
+      }
+     onSearch(value);
+    });
+  }
+
   Future<void> onSearch(String query) async {
 
-    //Future.delayed(const Duration(milliseconds: 500));
-      logger.i(query);
-    ref.read(selectedCustomerProvider.notifier).state.clear();
 
-      _allCustomer!.clear();
-      _vehicleLoading.clear();
-      _vehicleWidgets.clear();
-      _customerController.clear();
-      if(query.trim() == ""){
-        _fetchData();
-      }else{
-        setState(() {
-          _isLoading = true;
-        });
+        logger.i(query);
+        ref.read(selectedCustomerProvider.notifier).state.clear();
 
-        if (mounted) {
-          List searchData = await apiService.searchVehicle(query);
+        _allCustomer!.clear();
+        _vehicleLoading.clear();
+        _vehicleWidgets.clear();
+        _customerController.clear();
+
+
+
+        if(query.trim() == ""){
+          _fetchData();
+        }else{
+          setState(() {
+            _isLoading = true;
+          });
+
+          if (mounted) {
+            List searchData = await apiService.searchVehicle(query);
             for(var c in searchData){
               List<Vehicle> vehicles = c["vehicles"].map((vehicleJson) => Vehicle.fromJson(vehicleJson))
                   .cast<Vehicle>()
@@ -405,33 +425,38 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
               }
             }
 
-          setState(() {
+            setState(() {
 
-            // _filteredVehicles = vehicles;
-            // _groupVehicles(vehicles);
-            _isLoading = false;
-          });
+              // _filteredVehicles = vehicles;
+              // _groupVehicles(vehicles);
+              _isLoading = false;
+            });
 
-          WidgetsBinding.instance
-              .addPostFrameCallback((_){
-                // logger.i("allCustomerLength");
-                // logger.i(_allCustomer?.length);
+            WidgetsBinding.instance
+                .addPostFrameCallback((_){
+              // logger.i("allCustomerLength");
+              // logger.i(_allCustomer?.length);
 
-            if(_allCustomer!.length <= 2){
-              for(int i =0; i < _allCustomer!.length; i++){
-                if(_allCustomer![i]["vehicles_count"] <= 6 && _allCustomer![i]["vehicles_count"] != null && _allCustomer![i]["vehicles_count"] != 0){
-                  _customerController[i][i]?.expand();
+              if(_allCustomer!.length <= 2){
+                for(int i =0; i < _allCustomer!.length; i++){
+                  if(_allCustomer![i]["vehicles_count"] <= 6 && _allCustomer![i]["vehicles_count"] != null && _allCustomer![i]["vehicles_count"] != 0){
+                    _customerController[i][i]?.expand();
+                  }
                 }
               }
-            }
+            });
+          }
+
+
+          setState(() {
+            _isLoading = false;
           });
         }
 
 
-        setState(() {
-          _isLoading = false;
-        });
-      }
+
+
+
 
   }
 
@@ -531,7 +556,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                           child: ListTile(
                             title: Text(
                               vehicle.name ?? '',
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(fontSize: 14),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -936,14 +961,17 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             controller: searchController,
             onEditingComplete: (){
               FocusManager.instance.primaryFocus?.unfocus();
-              onSearch(searchController.text.trim());
+             // onSearch(searchController.text.trim());
             },
             onChanged: (value){
-              if(value.trim().length >= 4){
-                onSearch(searchController.text.trim());
-              }else if(value.trim().isEmpty){
-                onSearch(searchController.text.trim());
-              }
+
+      if(searchController.text.trim().length >= 4){
+        initiateRequest(searchController.text.trim());
+      }else if(searchController.text.trim().isEmpty){
+        initiateRequest(searchController.text.trim());
+      }
+
+
             },
             style: TextStyle(color: GlobalColor.textColor),
             decoration: InputDecoration(
