@@ -32,7 +32,7 @@ class _BottomBarState extends State<BottomBar> {
   void initState() {
     BottomBar.currentIndex = 1;
     super.initState();
-    _controller = PersistentTabController(initialIndex: 1);
+    _controller = PersistentTabController(initialIndex: 0);
     var mapScreen = MapScreen(lat: widget.lat, lon: widget.lon);
 
     _navScreens = [
@@ -49,6 +49,12 @@ class _BottomBarState extends State<BottomBar> {
         MapScreen.globalSetState?.call(lat, lon);
       });
     };
+    WidgetsBinding.instance
+        .addPostFrameCallback((_){
+
+      _controller.jumpToTab(1);
+    });
+
   }
 
   List<PersistentBottomNavBarItem> _navBarsItems() {
@@ -134,6 +140,7 @@ class _BottomBarState extends State<BottomBar> {
 
   @override
   Widget build(BuildContext context) {
+
     return PersistentTabView(
       context,
       controller: _controller,
