@@ -15,6 +15,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:VehiLoc/core/model/response_image_promo.dart';
 
+String serverUrl = "";
+
 class LoginView extends StatefulWidget {
   final TextEditingController? usernameController; 
 
@@ -33,6 +35,8 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  int changeToDevOrProdCounter = 0;
+
   bool isLoading = false;
 
   late String version = '';
@@ -41,6 +45,7 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   void initState() {
+    serverUrl = "vehiloc.net";
     super.initState();
     _usernameController.text = widget.usernameController?.text ?? '';
     _initPackageInfo();
@@ -56,7 +61,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> fetchCarouselData() async {
-    const String apiUrl = 'https://vehiloc.net/rest/promo_pictures';
+    String apiUrl = 'https://$serverUrl/rest/promo_pictures';
   
     try {
       final http.Response response = await http.get(Uri.parse(apiUrl));
@@ -75,7 +80,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _fetchAndCacheCustomerSalts() async {
-    const String apiUrl = 'https://vehiloc.net/rest/customer_salts';
+    String apiUrl = 'https://$serverUrl/rest/customer_salts';
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? username = prefs.getString('username');
     String? password = prefs.getString('password');
@@ -209,7 +214,7 @@ class _LoginViewState extends State<LoginView> {
 
     final String basicAuth = 'Basic ${base64Encode(utf8.encode('$username:$password'))}';
 
-    const String apiUrl = 'https://vehiloc.net/rest/token';
+    String apiUrl = 'https://$serverUrl/rest/token';
 
     try {
       final http.Response response = await http.get(
@@ -254,9 +259,42 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+
+    if(serverUrl != "vehiloc.net"){
+      if(changeToDevOrProdCounter == 1){
+        setState(() {
+          serverUrl = "vehiloc.net";
+          changeToDevOrProdCounter = 0;
+        });
+      }
+    }
+
+    if (changeToDevOrProdCounter >= 5) {
+
+      if(changeToDevOrProdCounter == 7){
+        if (serverUrl == "dev.vehiloc.net") {
+          setState(() {
+            serverUrl = "vehiloc.net";
+            changeToDevOrProdCounter = 0;
+          });
+        } else if (serverUrl == "vehiloc.net") {
+          setState(() {
+            serverUrl = "dev.vehiloc.net";
+            changeToDevOrProdCounter = 0;
+          });
+        }
+    }
+      if(changeToDevOrProdCounter > 12){
+        setState(() {
+          serverUrl = "vehiloc.net";
+          changeToDevOrProdCounter = 0;
+        });
+      }
+    }
     final bool isTablet = MediaQuery.of(context).size.width > 600;
     final bool isIpad = MediaQuery.of(context).size.width > 900;
     final double carouselHeight = isIpad ? MediaQuery.of(context).size.height * 0.8 : isTablet ? MediaQuery.of(context).size.height * 0.4  : MediaQuery.of(context).size.height * 0.2;
+    logger.d("changeToDevOrProdCounter = $changeToDevOrProdCounter");
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
@@ -345,20 +383,29 @@ class _LoginViewState extends State<LoginView> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      Text(
-                        'vehiloc.net',
+
+                      GestureDetector(
+                        onTap: (){
+                          changeToDevOrProdCounter += 1;                        },
+                        child:Text(
+                        serverUrl,
                         style: GoogleFonts.poppins(
                           color: GlobalColor.mainColor,
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
-                      ),
+                      ),),
+
                     ],
                   ),
                 ),
                 const SizedBox(height: 10),
                 CarouselSlider(
                   options: CarouselOptions(
+                    onPageChanged: (v, r){
+                      setState(() {
+                      });
+                    },
                     height: carouselHeight,
                     autoPlay: true,
                     autoPlayInterval: const Duration(seconds: 3),

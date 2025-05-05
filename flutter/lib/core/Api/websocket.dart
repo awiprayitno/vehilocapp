@@ -9,7 +9,7 @@ WebSocketChannel connectToWebSocket(String param) {
   List<dynamic> data = json.decode(param);
   var combineData = data.join(",");
   WebSocketChannel channel = WebSocketChannel.connect(
-    Uri.parse('wss://vehiloc.net/sub-split/$combineData'),
+    Uri.parse('wss://$serverUrl/sub-split/$combineData'),
   );
   return channel;
 }
@@ -58,7 +58,7 @@ class WebSocketProvider {
     logger.i(saltFragment);
     logger.i(customerSalts);
     channel = WebSocketChannel.connect(
-      Uri.parse('wss://vehiloc.net/sub-split/$saltFragment'),
+      Uri.parse('wss://$serverUrl/sub-split/$saltFragment'),
     );
 
     channel?.stream.listen((event) {

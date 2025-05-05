@@ -127,6 +127,7 @@ class _CheckTokenState extends State<CheckToken> {
   }
   @override
   void initState() {
+    serverUrl = "vehiloc.net";
     super.initState();
     _checkTokenAndRedirect();
   }

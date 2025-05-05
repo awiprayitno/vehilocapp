@@ -4,6 +4,7 @@ import 'package:VehiLoc/core/model/dashcamtype2.dart';
 import 'package:VehiLoc/core/model/picture.dart';
 import 'package:VehiLoc/core/model/vehicle_picture.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
+import 'package:VehiLoc/features/auth/login/login_view.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,10 +14,10 @@ import 'package:VehiLoc/core/model/response_geofences.dart';
 import 'package:VehiLoc/core/model/dashcamtype1.dart';
 
 class ApiService {
-  final String baseUrl = "https://vehiloc.net/rest/";
-  final String baseApiUrl = "https://vehiloc.net/api";
-  final String baseDevApiUrl = "https://dev.vehiloc.net/api";
-  final String baseUrlDashcam = "https://dev.vehiloc.net/api/v1.0/live_stream";
+  final String baseUrl = "https://$serverUrl/rest/";
+  final String baseApiUrl = "https://$serverUrl/api";
+  // final String baseDevApiUrl = "https://dev.vehiloc.net/api";
+  // final String baseUrlDashcam = "https://dev.vehiloc.net/api/v1.0/live_stream";
   int timeoutDuration = 20000;
 
   Future<List<Vehicle>> fetchAllVehicles() async {
@@ -355,7 +356,7 @@ class ApiService {
     }
   }
   Future<Dashcamtype1> fetchDashcam(String imei) async {
-    final String apiUrl = "https://vehiloc.net/api/v1.0/live_stream?vehicle_imei=$imei&type=1";
+    final String apiUrl = "https://$serverUrl/api/v1.0/live_stream?vehicle_imei=$imei&type=1";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
@@ -374,7 +375,7 @@ class ApiService {
   }
 
   Future<Dashcamtype2> fetchDashcamType2(String imei) async {
-    final String apiUrl = "https://vehiloc.net/api/v1.0/live_stream?vehicle_imei=$imei&type=2";
+    final String apiUrl = "https://$serverUrl/api/v1.0/live_stream?vehicle_imei=$imei&type=2";
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
