@@ -395,22 +395,101 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    borderRadius: BorderRadius.circular(4.0),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: Text(
-                                      vehicle.plateNo ?? '',
-                                      style: TextStyle(
-                                        color: GlobalColor.textColor,
-                                        fontSize: 10,
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                  vehicle.plateNo!.isNotEmpty ?
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: Text(
+                                        vehicle.plateNo ?? '',
+                                        style: TextStyle(
+                                          color: GlobalColor.textColor,
+                                          fontSize: 10,
+                                        ),
                                       ),
                                     ),
+                                  ) : const SizedBox(),
+                                  gpsdtWIB != null ?
+                                  Text(
+                                    formatDateTime(gpsdtWIB),
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ) : const SizedBox(),
+                                ],),
+                                const SizedBox(height: 5,),
+                                if (gpsdtWIB != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0, top: 2),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        const SizedBox(height: 3),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            ...(vehicle.sensors?.take(4).map((sensor) {
+                                              return Padding(
+                                                padding:const EdgeInsets.only(right: 2,bottom: 2),
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: getSensorColor(sensor.bgColor?.toLowerCase()),
+                                                    borderRadius: BorderRadius.circular(5),
+                                                  ),
+                                                  child: Text(
+                                                    sensor.name ?? '',
+                                                    style: TextStyle(
+                                                      color: GlobalColor.textColor,
+                                                      fontSize: 8,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }).toList() ??
+                                                []),
+                                          ],
+                                        ),
+                                        if ((vehicle.sensors?.length ?? 0) > 3)
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              ...(vehicle.sensors?.skip(4).take(2).map((sensor) {
+                                                return Padding(
+                                                  padding: const EdgeInsets.only(right: 2, top: 3, bottom: 3),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration:BoxDecoration(
+                                                      color: getSensorColor(sensor.bgColor?.toLowerCase()),
+                                                      borderRadius: BorderRadius.circular(5),
+                                                    ),
+                                                    child: Text(
+                                                      sensor.name ?? '',
+                                                      style: TextStyle(
+                                                        color: GlobalColor.textColor,
+                                                        fontSize: 8,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              }).toList() ??
+                                                  []),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
                                 // if (_vehicleToAddress.containsKey(vehicle))
                                 //   Text(
                                 //     _vehicleToAddress[vehicle]!,
@@ -492,75 +571,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                           )
                       ),
                     ),
-                    if (gpsdtWIB != null)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0, top: 2),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              formatDateTime(gpsdtWIB),
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                ...(vehicle.sensors?.take(2).map((sensor) {
-                                  return Padding(
-                                    padding:const EdgeInsets.only(right: 2,bottom: 2),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8,vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: getSensorColor(sensor.bgColor?.toLowerCase()),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      child: Text(
-                                        sensor.name ?? '',
-                                        style: TextStyle(
-                                          color: GlobalColor.textColor,
-                                          fontSize: 8,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList() ??
-                                    []),
-                              ],
-                            ),
-                            if ((vehicle.sensors?.length ?? 0) > 2)
-                              Row(
-                                children: [
-                                  ...(vehicle.sensors?.skip(2).take(2).map((sensor) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 2, top: 3, bottom: 3),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration:BoxDecoration(
-                                          color: getSensorColor(sensor.bgColor?.toLowerCase()),
-                                          borderRadius: BorderRadius.circular(5),
-                                        ),
-                                        child: Text(
-                                          sensor.name ?? '',
-                                          style: TextStyle(
-                                            color: GlobalColor.textColor,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }).toList() ??
-                                      []),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ),
+
                   ],
                 ),
 
