@@ -33,6 +33,10 @@ class DataItem {
   final int temp;
   final String colorBox;
 
+  int? temperature1;
+  int? gsmsignal;
+  int? ad3value;
+
   DataItem({
     required this.bearing,
     required this.gpsdt,
@@ -41,6 +45,9 @@ class DataItem {
     required this.longitude,
     required this.speed,
     required this.temp,
+    this.temperature1,
+    this.gsmsignal,
+    this.ad3value
   }) : colorBox = _calculateColorBox(speed);
 
   factory DataItem.fromJson(Map<String, dynamic> json) {
@@ -52,6 +59,9 @@ class DataItem {
       longitude: json['longitude'] ?? 0.0,
       speed: json['speed'] ?? 0,
       temp: json['temp'] ?? 0,
+      temperature1: json["temperature1"],
+      gsmsignal: json["gsmsignal"],
+      ad3value: json["ad3value"]
     );
   }
 

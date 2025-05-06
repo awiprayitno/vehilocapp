@@ -750,6 +750,8 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
               Checkbox(
                 value: _isTemperatureChartVisible,
                 onChanged: (value) {
+                  logger.d("dailydata");
+                  logger.i(dailyData[0].ad3value);
                   setState(() {
                     _isTemperatureChartVisible = value!;
                   });
