@@ -223,18 +223,22 @@ class ApiService {
         Uri.parse(apiUrl),
         headers: {'Authorization': basicAuth},
       );
+      logger.i("Vehicle Daily Response:");
+      logger.i(response.body);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        logger.i("Vehicle Daily Response:");
-        logger.i(jsonResponse);
+
         return Data.fromJson(jsonResponse);
       } else {
         throw Exception('Failed to load data from API');
       }
-    } catch (e) {
-      throw Exception('Error during API request: $e');
+
+    } catch (e, w) {
+      logger.i(w);
+      throw Exception('Error during API request: $e, $w');
     }
+
   }
 
   Future<List<Geofences>> fetchGeofences() async {

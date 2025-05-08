@@ -299,6 +299,8 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   }
 
   void _convertAndNavigateToDetailsPage(Vehicle vehicle) {
+
+
     if (vehicle.gpsdt != null) {
       final DateTime now = DateTime.now();
       final DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
@@ -337,6 +339,10 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
     List<Vehicle> value = vehicles;
       for(Vehicle v in value){
+        logger.i("lastupdatecolor");
+        logger.i(v.lastUpdateColor);
+
+        int colorByte = int.parse(v.lastUpdateColor!.replaceRange(0, 1, "0xff"));
         Vehicle vehicle = v;
         DateTime? gpsdtWIB;
         if (vehicle.gpsdt != null) {
@@ -416,8 +422,8 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                                   gpsdtWIB != null ?
                                   Text(
                                     formatDateTime(gpsdtWIB),
-                                    style: const TextStyle(
-                                      color: Colors.blue,
+                                    style: TextStyle(
+                                      color: Color(colorByte),
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),

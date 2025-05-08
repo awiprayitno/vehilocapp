@@ -74,7 +74,6 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    logger.e("hasillllllll : ${widget.imei}");
     _tabController = TabController(length: widget.type == 0 || widget.type == 12345 ? 5 : 4, vsync: this);
     _tabController.addListener(_handleTabSelection);
 
@@ -129,7 +128,8 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
         inputData = allData.isNotEmpty ? dataAll.inputlogs : [];
         detailsItem = allData.isNotEmpty ? dataAll.jdetails : [];
       });
-    } catch (e) {
+    } catch (e, w) {
+      logger.w(w);
       logger.e("error : $e");
     }
   }

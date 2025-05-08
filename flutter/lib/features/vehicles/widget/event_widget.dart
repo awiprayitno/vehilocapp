@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:VehiLoc/core/model/response_daily.dart';
 
+import '../../../core/utils/logger.dart';
+
 class EventWidget extends StatefulWidget {
   final List<InputLogsItem> eventData;
 
@@ -75,6 +77,8 @@ class _EventWidgetState extends State<EventWidget> with AutomaticKeepAliveClient
               ),
             ],
             rows: widget.eventData.map((inputLogs) {
+              logger.d("inputlogsss");
+              logger.i(inputLogs);
               return DataRow(cells: [
                 DataCell(Text(
                   DateFormat.Hm().format(DateTime.fromMillisecondsSinceEpoch(inputLogs.dt * 1000)),

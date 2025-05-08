@@ -3,6 +3,7 @@ class Vehicle {
   String? name;
   String? plateNo;
   int? gpsdt;
+  String? lastUpdateColor;
   int? speed;
   double? lat;
   double? lon;
@@ -19,6 +20,7 @@ class Vehicle {
     required this.name,
     required this.plateNo,
     required this.gpsdt,
+    this.lastUpdateColor,
     this.speed = 0,
     required this.lat,
     required this.lon,
@@ -35,6 +37,7 @@ class Vehicle {
     name = json['name'];
     plateNo = json['plate_no'];
     gpsdt = json['gpsdt'];
+    lastUpdateColor = json["last_update_color"];
     speed = (json['speed'] is int) ? json["speed"] : int.tryParse(json["speed"] ?? "0");
     lat = json['lat'];
     lon = json['lon'];
@@ -57,6 +60,7 @@ class Vehicle {
     data['name'] = name;
     data['plate_no'] = plateNo;
     data['gpsdt'] = gpsdt;
+    data["last_update_color"] = lastUpdateColor;
     data['speed'] = speed;
     data['lat'] = lat;
     data['lon'] = lon;
