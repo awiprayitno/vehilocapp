@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:VehiLoc/core/Api/websocket.dart';
 import 'package:VehiLoc/features/vehicles/models/vehicle_models.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -18,6 +19,9 @@ import 'package:VehiLoc/core/model/response_geofences.dart';
 import 'package:VehiLoc/core/Api/api_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:label_marker/label_marker.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+
+import '../vehicles/details_view.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   double? lat;
@@ -71,6 +75,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
     });
 
 
+
     setMarkerIcons();
     // _fetchGeofences = fetchGeofencesData();
     // _fetchDataAndGeofences = fetchAllData();
@@ -104,6 +109,39 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
       }
     }
   }
+  void _convertAndNavigateToDetailsPage(Vehicle vehicle) {
+
+
+    if (vehicle.gpsdt != null) {
+      final DateTime now = DateTime.now();
+      final DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
+        vehicle.gpsdt! * 1000,
+        isUtc: true,
+      );
+
+      DateTime gpsdtWIB;
+      if (gpsdtUtc.year == now.year && gpsdtUtc.month == now.month && gpsdtUtc.day == now.day) {
+        gpsdtWIB = DateTime(now.year, now.month, now.day, 0, 0, 0);
+      } else {
+        gpsdtWIB = DateTime(gpsdtUtc.year, gpsdtUtc.month, gpsdtUtc.day, 0, 0, 0);
+      }
+
+      PersistentNavBarNavigator.pushNewScreen(
+        context,
+        screen: DetailsPageView(
+          vehicleId: vehicle.vehicleId!,
+          // vehicleLat: vehicle.lat!,
+          // vehicleLon: vehicle.lon!,
+          vehicleName: vehicle.name!,
+          gpsdt: gpsdtWIB.millisecondsSinceEpoch ~/ 1000,
+          type: vehicle.type!,
+          imei: vehicle.imei!,
+        ),
+        withNavBar: true,
+        pageTransitionAnimation: PageTransitionAnimation.fade,
+      );
+    }
+  }
 
 
   void setMarkers(bool isRealtime){
@@ -132,6 +170,9 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
             position: LatLng(vehicle.lat!, vehicle.lon!),
             icon: markerIcon,
             infoWindow: InfoWindow(
+              onTap: (){
+                _convertAndNavigateToDetailsPage(vehicle);
+              },
               title: ("${vehicle.name}"),
               snippet: ("${regexPlateNo.hasMatch(vehicle.name!)?"":vehicle.plateNo} ${vehicle.speed} kmh ${formatDateTime(gpsdtWIB!)} ${vehicle.type == 4 ? "${vehicle.baseMcc! ~/ 10}°C" : ""}"),
             ),
@@ -334,99 +375,133 @@ void _resetCameraPosition() {
           ),
           backgroundColor: GlobalColor.mainColor,
           actions: [
-            _fetchGeofences.isNotEmpty ?
-                 Row(children: [
-                    const Text("Geofence ",
-                      style: TextStyle(fontSize: 16, color: Colors.white),),
-                    SizedBox(
-                      width: 51.0,
-                      height: 31.0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey,
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: CupertinoSwitch(
-                          value: switchGeofences,
-                          onChanged: (newValue) {
-                            setState(() {
-                              switchGeofences = newValue;
-                              geofencesEnabled = newValue;
-                              final snackBarMessage = SnackBar(
-                                content: Text(newValue
-                                    ? 'Showing Geofences'
-                                    : 'Hiding Geofences'),
-                                duration: const Duration(seconds: 2),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  snackBarMessage);
-                            });
-                          },
-                          activeColor: CupertinoColors.activeGreen,
-                        ),
-                      ),
-                    )
-                  ],)
-            : const SizedBox(),
+            PopupMenuButton(
+              icon: const Icon(Icons.more_vert, color: Colors.white,),
+              itemBuilder: (BuildContext context) {
+                List<PopupMenuItem> popUpMenuItem = [];
+                if(_fetchGeofences.isNotEmpty){
+                  popUpMenuItem.add(
+                    PopupMenuItem(
+                    child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return
+                          Row(children: [
+                            const Text("Geofence ",
+                              style: TextStyle(fontSize: 16, color: Colors.black),),
+                            SizedBox(
+                              width: 51.0,
+                              height: 31.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                child: CupertinoSwitch(
+                                  value: switchGeofences,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      switchGeofences = newValue;
+                                      geofencesEnabled = newValue;
+                                      final snackBarMessage = SnackBar(
+                                        content: Text(newValue
+                                            ? 'Showing Geofences'
+                                            : 'Hiding Geofences'),
+                                        duration: const Duration(seconds: 2),
+                                      );
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          snackBarMessage);
+                                    });
+                                  },
+                                  activeColor: CupertinoColors.activeGreen,
+                                ),
+                              ),
+                            )
+                          ],);
+                      },
+                    ),
+                  ),);
+                }
 
-            _allVehicles.isNotEmpty ?
-            Row(children: [
-              Container(
-                margin: const EdgeInsets.only(left: 15, right: 5),
-                child: const FaIcon(FontAwesomeIcons.info, size: 20,
-                  color: Colors.white,),),
-              //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
-              SizedBox(
-                width: 51.0,
-                height: 31.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  child:
-                  CupertinoSwitch(
-                    value: !realtime,
-                    onChanged: (newValue) {
-                      setState(() {
-                        realtime = !newValue;
-                      });
-                      final snackBarMessage = SnackBar(
-                        content: Text(newValue
-                            ? 'Showing Details (Disabled Realtime)'
-                            : 'Hiding Details (Enabled Realtime)'),
-                        duration: const Duration(seconds: 3),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          snackBarMessage);
-                      if (realtime) {
-                        WebSocketProvider.subscribe(realtimeHandler, customerSalts);
-                      } else {
-                        try {
-                          setMarkers(realtime);
-                        } catch (e) {
-                          logger.e(e);
-                        }
-                        WebSocketProvider.unsubscribe(realtimeHandler);
-                      }
-                    },
-                    activeColor: CupertinoColors.activeGreen,
-                  ),
-                ),
-              )
-            ],)
-            :const SizedBox(),
+                if(_allVehicles.isNotEmpty){
+                  popUpMenuItem.add( PopupMenuItem(
+                    child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return
+                          Row(children: [
+                            Container(
+                              margin: const EdgeInsets.only(left: 15, right: 5),
+                              child: const FaIcon(FontAwesomeIcons.info, size: 20,
+                                color: Colors.black,),),
+                            //const Text("  Name ", style: TextStyle(fontSize: 16, color: Colors.white),),
+                            SizedBox(
+                              width: 51.0,
+                              height: 31.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(16.0),
+                                ),
+                                child:
+                                CupertinoSwitch(
+                                  value: !realtime,
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      realtime = !newValue;
+                                    });
+                                    final snackBarMessage = SnackBar(
+                                      content: Text(newValue
+                                          ? 'Showing Details (Disabled Realtime)'
+                                          : 'Hiding Details (Enabled Realtime)'),
+                                      duration: const Duration(seconds: 3),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        snackBarMessage);
+                                    if (realtime) {
+                                      WebSocketProvider.subscribe(realtimeHandler, customerSalts);
+                                    } else {
+                                      try {
+                                        setMarkers(realtime);
+                                      } catch (e) {
+                                        logger.e(e);
+                                      }
+                                      WebSocketProvider.unsubscribe(realtimeHandler);
+                                    }
+                                  },
+                                  activeColor: CupertinoColors.activeGreen,
+                                ),
+                              ),
+                            )
+                          ],);
+                      },
+                    ),
+                  ));
+                }
 
-            TextButton(
-              onPressed: _zoomOutMap,
-              child: Text(
-                '[   ]',
-                style: TextStyle(
-                  color: GlobalColor.textColor,
-                  fontSize: 24.0,
-                ),
-              ),
+                popUpMenuItem.add(
+                  PopupMenuItem(
+                    child: StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return
+                          TextButton(
+                            onPressed: _zoomOutMap,
+                            child: const Text(
+                              '[   ]',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 24.0,
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          );
+                      },
+                    ),
+                  ),);
+                return popUpMenuItem;
+              },
             ),
+
+
+
 
 
             // IconButton(
