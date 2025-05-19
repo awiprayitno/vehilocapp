@@ -352,6 +352,15 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
         vehiclesWidget.add(
           ExpansionTile(
+            trailing: gpsdtWIB != null ?
+            Text(
+              formatDateTime(gpsdtWIB),
+              style: TextStyle(
+                color: Color(colorByte),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ) : const SizedBox.shrink(),
               onExpansionChanged: (isExpand){
                 // if(isExpand){
                 //   setState(() {
@@ -419,15 +428,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
                                       ),
                                     ),
                                   ) : const SizedBox(),
-                                  gpsdtWIB != null ?
-                                  Text(
-                                    formatDateTime(gpsdtWIB),
-                                    style: TextStyle(
-                                      color: Color(colorByte),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ) : const SizedBox(),
+
                                 ],),
                                 const SizedBox(height: 5,),
                                 if (gpsdtWIB != null)

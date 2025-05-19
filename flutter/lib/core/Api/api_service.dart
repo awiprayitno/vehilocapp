@@ -202,9 +202,9 @@ class ApiService {
     }
   }
 
-  Future<Data> fetchDailyHistory(int vehicleId, int startEpoch) async {
+  Future<Data> fetchDailyHistory(int vehicleId, int startEpoch, int timezone) async {
     final String apiUrl =
-        "$baseUrl/vehicle_daily_history/$vehicleId/$startEpoch";
+        "$baseUrl/vehicle_daily_history/$vehicleId/$startEpoch?timezone=$timezone";
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();

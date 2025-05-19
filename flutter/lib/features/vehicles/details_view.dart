@@ -119,8 +119,11 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
     final int vehicleId = widget.vehicleId;
     final int startEpoch = widget.gpsdt;
 
+    logger.i("timezone");
+    logger.i(DateTime.now().timeZoneOffset.inHours);
+
     try {
-      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
+      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch, DateTime.now().timeZoneOffset.inHours);
 
       setState(() {
         allData = [dataAll];
@@ -955,7 +958,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
         _endDt = _calculateEndDtEpoch();
       });
 
-      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
+      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch, DateTime.now().timeZoneOffset.inHours);
 
       setState(() {
         allData = [dataAll];
@@ -1052,7 +1055,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
     final int startEpoch = widget.gpsdt;
 
     try {
-      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
+      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch, DateTime.now().timeZoneOffset.inHours);
 
       return dataAll.inputlogs;
     } catch (e) {
@@ -1066,7 +1069,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
     final int startEpoch = widget.gpsdt;
 
     try {
-      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch);
+      final Data dataAll = await apiService.fetchDailyHistory(vehicleId, startEpoch, DateTime.now().timeZoneOffset.inHours);
 
       return dataAll.jdetails;
     } catch (e) {
