@@ -110,6 +110,8 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
     }
   }
   void _convertAndNavigateToDetailsPage(Vehicle vehicle) {
+    logger.i("vehicle data");
+    logger.d(vehicle.type);
 
 
     if (vehicle.gpsdt != null) {
@@ -126,6 +128,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
         gpsdtWIB = DateTime(gpsdtUtc.year, gpsdtUtc.month, gpsdtUtc.day, 0, 0, 0);
       }
 
+
       PersistentNavBarNavigator.pushNewScreen(
         context,
         screen: DetailsPageView(
@@ -137,7 +140,7 @@ class _MapScreenState extends ConsumerState<MapScreen> with AutomaticKeepAliveCl
           type: vehicle.type!,
           imei: vehicle.imei!,
         ),
-        withNavBar: true,
+        withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.fade,
       );
     }

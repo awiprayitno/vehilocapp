@@ -299,6 +299,9 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   }
 
   void _convertAndNavigateToDetailsPage(Vehicle vehicle) {
+    logger.i("vehicle data");
+    logger.d(vehicle.type);
+
 
 
     if (vehicle.gpsdt != null) {
@@ -326,7 +329,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           type: vehicle.type!,
           imei: vehicle.imei!,
         ),
-        withNavBar: true,
+        withNavBar: false,
         pageTransitionAnimation: PageTransitionAnimation.fade,
       );
     } else {
@@ -352,6 +355,8 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
         vehiclesWidget.add(
           ExpansionTile(
+            enabled: false,
+            initiallyExpanded: true,
             trailing: gpsdtWIB != null ?
             Text(
               formatDateTime(gpsdtWIB),

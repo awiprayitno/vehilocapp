@@ -8,8 +8,9 @@ class DashcamWidget extends StatefulWidget {
   final int? vehicleId;
   final int? startDt;
   final int? endDt;
+  VehiclePicture? vehiclePicture;
   final Function() onUpdateStartEpoch; // Define the callback function
-  const DashcamWidget({Key? key, this.vehicleId, this.startDt, this.endDt, required this.onUpdateStartEpoch}) : super(key: key);
+  DashcamWidget({Key? key, this.vehicleId, this.startDt, this.endDt, this.vehiclePicture, required this.onUpdateStartEpoch}) : super(key: key);
 
   @override
   State<DashcamWidget> createState() => _DashcamWidgetState();
@@ -17,7 +18,7 @@ class DashcamWidget extends StatefulWidget {
 
 class _DashcamWidgetState extends State<DashcamWidget> with AutomaticKeepAliveClientMixin<DashcamWidget> {
   late int _currentPageIndex;
-  late VehiclePicture vehiclePicture = VehiclePicture(); 
+  //late VehiclePicture vehiclePicture = VehiclePicture();
   late Map<String, String> imagePathsMap = {}; 
 
   @override
@@ -32,8 +33,10 @@ class _DashcamWidgetState extends State<DashcamWidget> with AutomaticKeepAliveCl
     try {
       final ApiService apiService = ApiService();
       final vehiclePicture = await apiService.fetchVehiclePicture(widget.vehicleId!, widget.startDt!, widget.endDt!);
+      logger.i("vehiclePicture");
+      logger.i(vehiclePicture);
       setState(() {
-        this.vehiclePicture = vehiclePicture;
+        widget.vehiclePicture = vehiclePicture;
       });
       for (Result result in vehiclePicture.result ?? []) {
         if (result.picOid != null) {
@@ -134,7 +137,7 @@ class _DashcamWidgetState extends State<DashcamWidget> with AutomaticKeepAliveCl
   Widget build(BuildContext context) {
     super.build(context);
 
-    List<Result> results = vehiclePicture.result ?? [];
+    List<Result> results = widget.vehiclePicture?.result ?? [];
 
     return Scaffold(
       body: SingleChildScrollView(

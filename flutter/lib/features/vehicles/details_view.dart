@@ -1,3 +1,4 @@
+import 'package:VehiLoc/core/model/vehicle_picture.dart';
 import 'package:VehiLoc/features/vehicles/widget/dashcam_widget.dart';
 import 'package:VehiLoc/features/vehicles/widget/dms_widget.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,8 @@ import 'package:VehiLoc/core/utils/custom_slider.dart';
 import 'package:VehiLoc/features/vehicles/widget/naration_widget.dart';
 import 'package:VehiLoc/features/vehicles/widget/event_widget.dart';
 import 'package:VehiLoc/core/utils/logger.dart';
+
+import '../../core/model/dashcamtype1.dart';
 
 class DetailsPageView extends StatefulWidget {
   final int vehicleId;
@@ -70,6 +73,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
   double? stopLatitude;
   double? stopLongitude;
   int? selectedMarkerId;
+  VehiclePicture? vehiclePicture;
 
   @override
   void initState() {
@@ -92,6 +96,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
     setMarkerIcons();
     fetchAllData();
     // _fetchGeofencesData();
+    fetchVehiclePicture();
   }
   int _calculateEndDtEpoch() {
     DateTime endDt = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 23, 59, 0);
@@ -102,6 +107,18 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void fetchVehiclePicture() async {
+    try {
+      final ApiService apiService = ApiService();
+      vehiclePicture = await apiService.fetchVehiclePicture(widget.vehicleId, widget.gpsdt, _endDt);
+      logger.i("vehiclePicture");
+      logger.i(vehiclePicture);
+
+    } catch (e) {
+      logger.e('Error fetching picture vehicle data: $e');
+    }
   }
   void _updateStartEpochCallback(int startEpoch) {
     setState(() {
@@ -399,7 +416,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
               const Tab(icon: Icon(Icons.article, color: Colors.white)),
               const Tab(icon: Icon(Icons.event, color: Colors.white)),
               const Tab(icon: Icon(Icons.insert_chart, color: Colors.white)),
-              if (widget.type == 0)
+              if (vehiclePicture != null && vehiclePicture!.result!.isNotEmpty)
                 const Tab(icon: Icon(Icons.camera_alt, color: Colors.white)),
               if (widget.type == 12345)
                 const Tab(icon: Icon(Icons.video_call, color: Colors.white)),
@@ -577,7 +594,7 @@ class _DetailsPageViewState extends State<DetailsPageView> with SingleTickerProv
                       eventData: inputData,
                     ),
                     _buildChartWidget(),
-                    if (widget.type == 0)
+                    if (vehiclePicture != null && vehiclePicture!.result!.isNotEmpty)
                       DashcamWidget(
                         vehicleId: widget.vehicleId,
                         startDt: widget.gpsdt,
