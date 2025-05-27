@@ -126,7 +126,7 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   void _onRefresh() async {
     // monitor network fetch
     if(searchController.text.isNotEmpty){
-      onSearch(searchController.text.trim());
+      await onSearch(searchController.text.trim());
     }else{
       _fetchData();
     }
@@ -221,11 +221,8 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
   // }
 
   Future<void> onSearch(String query) async {
-
-    //Future.delayed(const Duration(milliseconds: 500));
-      logger.i(query);
-    ref.read(selectedCustomerProvider.notifier).state.clear();
-
+    if(!_isLoading){
+      ref.read(selectedCustomerProvider.notifier).state.clear();
       _allCustomer!.clear();
       _vehicleLoading.clear();
       _vehicleWidgets.clear();
@@ -239,36 +236,36 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
 
         if (mounted) {
           List searchData = await apiService.searchVehicle(query);
-            for(var c in searchData){
-              List<Vehicle> vehicles = c["vehicles"].map((vehicleJson) => Vehicle.fromJson(vehicleJson))
+          for(var c in searchData){
+            List<Vehicle> vehicles = c["vehicles"].map((vehicleJson) => Vehicle.fromJson(vehicleJson))
+                .cast<Vehicle>()
+                .toList();
+            _allCustomer!.add({
+              "id": c["id"],
+              "name" : c["name"],
+              "salt" : c["salt"],
+              "vehicles_count" : c["vehicles"].length,
+              "vehicles" : vehicles,
+            });
+          }
+
+
+
+          if(_vehicleLoading.isEmpty){
+            for(int s =0; s < searchData.length; s++){
+              List<Widget> vehicleWidgets = await onExpansionChanged(searchData[s]["vehicles"]
+                  .map((vehicleJson) => Vehicle.fromJson(vehicleJson))
                   .cast<Vehicle>()
-                  .toList();
-              _allCustomer!.add({
-                "id": c["id"],
-                "name" : c["name"],
-                "salt" : c["salt"],
-                "vehicles_count" : c["vehicles"].length,
-                "vehicles" : vehicles,
-              });
+                  .toList());
+
+              _vehicleWidgets.add({s: vehicleWidgets});
             }
+            for(int i =0; i < _allCustomer!.length; i++){
+              _vehicleLoading.add({i:false});
 
-
-
-            if(_vehicleLoading.isEmpty){
-              for(int s =0; s < searchData.length; s++){
-                List<Widget> vehicleWidgets = await onExpansionChanged(searchData[s]["vehicles"]
-                    .map((vehicleJson) => Vehicle.fromJson(vehicleJson))
-                    .cast<Vehicle>()
-                    .toList());
-
-                _vehicleWidgets.add({s: vehicleWidgets});
-              }
-              for(int i =0; i < _allCustomer!.length; i++){
-                _vehicleLoading.add({i:false});
-
-                _customerController.add({i : ExpansionTileController()});
-              }
+              _customerController.add({i : ExpansionTileController()});
             }
+          }
 
           setState(() {
 
@@ -289,35 +286,29 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           //
           // });
         }
-
-
         setState(() {
           _isLoading = false;
         });
       }
+    }
 
   }
 
   void _convertAndNavigateToDetailsPage(Vehicle vehicle) {
     logger.i("vehicle data");
     logger.d(vehicle.type);
-
-
-
     if (vehicle.gpsdt != null) {
       final DateTime now = DateTime.now();
       final DateTime gpsdtUtc = DateTime.fromMillisecondsSinceEpoch(
         vehicle.gpsdt! * 1000,
         isUtc: true,
       );
-
       DateTime gpsdtWIB;
       if (gpsdtUtc.year == now.year && gpsdtUtc.month == now.month && gpsdtUtc.day == now.day) {
         gpsdtWIB = DateTime(now.year, now.month, now.day, 0, 0, 0);
       } else {
         gpsdtWIB = DateTime(gpsdtUtc.year, gpsdtUtc.month, gpsdtUtc.day, 0, 0, 0);
       }
-
       PersistentNavBarNavigator.pushNewScreen(
         context,
         screen: DetailsPageView(
@@ -668,9 +659,9 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
           automaticallyImplyLeading: false,
           title: TextField(
             controller: searchController,
-            onEditingComplete: (){
+            onEditingComplete: () async {
               FocusManager.instance.primaryFocus?.unfocus();
-              onSearch(searchController.text.trim());
+              await onSearch(searchController.text.trim());
             },
             //onChanged: onSearch,
             style: TextStyle(color: GlobalColor.textColor),
@@ -681,9 +672,9 @@ class _VehicleViewState extends ConsumerState<VehicleView> with AutomaticKeepAli
             ),
           ),
           actions: [
-            IconButton(onPressed: (){
+            IconButton(onPressed: () async {
               FocusManager.instance.primaryFocus?.unfocus();
-              onSearch(searchController.text.trim());
+              await onSearch(searchController.text.trim());
             }, icon: const Icon(Icons.search), color: Colors.white,)
           ],
           backgroundColor: GlobalColor.mainColor,
